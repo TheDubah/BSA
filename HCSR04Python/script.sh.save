@@ -1,0 +1,2 @@
+while(1):	python range.py &
+	python range2.py &
