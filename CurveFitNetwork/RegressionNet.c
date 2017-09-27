@@ -8,7 +8,7 @@
 #include <time.h>
 
 #define COEFF 3
-#define INPUTS 10
+#define INPUTS 6
 
 void newNet_Reg(char *networkID, int seed, int coefficients);
 void deleteNet(char *networkID);
@@ -16,11 +16,11 @@ void train_reg(char *networkID, int coefficients, double *training, int trainSam
 double sigmoid(double x);
 
 int main(void){
-	//newNet_Reg("CurveFit",117,COEFF);
+	newNet_Reg("CurveFit",117,COEFF);
 	
-	double inputs[INPUTS] = {1.0,-2.0,-3.0,-2.0,1.0,6.0,13.0,22.0,33.0,46.0};
-	
-	train_reg("CurveFit",COEFF, inputs, INPUTS, 1, 100);
+	//double inputs[INPUTS] = {1.0,-2.0,-3.0,-2.0,1.0,6.0,13.0,22.0,33.0,46.0};
+	double inputs[INPUTS] = {3.0,10.0,13.0,0.0,7.0,-2.0};
+	train_reg("CurveFit",COEFF, inputs, INPUTS, 1, 10000);
 	
 	return 0;
 }
@@ -88,7 +88,7 @@ void train_reg(char *networkID, int coefficients, double *training, int trainSam
 	strcat(inputFileName,".txt");
 	
 	//copy coefficients from file
-	coefFile = fopen(inputFileName,"w");
+	coefFile = fopen(inputFileName,"r");
 	if(coefFile == NULL){
 		fprintf(stderr, "Error opening COEF file\n");
 		return;
@@ -103,7 +103,7 @@ void train_reg(char *networkID, int coefficients, double *training, int trainSam
 	
 	
 	int j,k;
-	double sum, error;
+	double sum, error, coeff_hold;
 	for(k=0;k<iterations;k++){
 		
 		printf("----------------k=%d--------------------\n", k);
@@ -111,18 +111,23 @@ void train_reg(char *networkID, int coefficients, double *training, int trainSam
 			printf("Coeff[%d]: %lf\n", i, coeff[i]);
 		}
 		printf("---------------------------------------\n");
-		
+
 		
 		for(i=0;i<trainSamples;i++){
 			sum = 0;
 			for(j=0;j<coefficients;j++){
-				sum += coeff[j] * pow(i,j);
+				sum += coeff[j] * pow(i,(2-j));
 			}
+			printf("sum: %lf\n",sum);
+			printf("training[%d]: %lf\n",i,training[i]);
 			
 			error = training[i] - sum;
+			printf("error: %lf\n",error);
 			
 			for(j=0;j<coefficients;j++){
 				coeff[j] += learning_rate * (error * sigmoid(sum) * (1 - sigmoid(sum))) * training[i];
+				//coeff_hold = coeff[j];
+				//coeff[j] += learning_rate * (error * (coeff_hold * pow(i,(2-j))) / (sum) );
 			}
 		}
 	}
