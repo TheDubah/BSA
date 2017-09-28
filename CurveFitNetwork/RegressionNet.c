@@ -8,19 +8,21 @@
 #include <time.h>
 
 #define COEFF 3
-#define INPUTS 6
+#define INPUTS 10
 
 void newNet_Reg(char *networkID, int seed, int coefficients);
 void deleteNet(char *networkID);
 void train_reg(char *networkID, int coefficients, double *training, int trainSamples, double learning_rate, int iterations);
+void regression(char *networkID, int coefficients, double *training, int trainSamples, double learning_rate, int iterations);
 double sigmoid(double x);
 
 int main(void){
 	newNet_Reg("CurveFit",117,COEFF);
 	
-	//double inputs[INPUTS] = {1.0,-2.0,-3.0,-2.0,1.0,6.0,13.0,22.0,33.0,46.0};
-	double inputs[INPUTS] = {3.0,10.0,13.0,0.0,7.0,-2.0};
-	train_reg("CurveFit",COEFF, inputs, INPUTS, 1, 10000);
+	double inputs[INPUTS] = {1.0,-2.0,-3.0,-2.0,1.0,6.0,13.0,22.0,33.0,46.0};
+	//double inputs[INPUTS] = {3.0,10.0,13.0,0.0,7.0,-2.0};
+	//double inputs[INPUTS] = {2,4,5};
+	regression("CurveFit",COEFF, inputs, INPUTS, 0.001, 100);
 	
 	return 0;
 }
@@ -103,7 +105,7 @@ void train_reg(char *networkID, int coefficients, double *training, int trainSam
 	
 	
 	int j,k;
-	double sum, error, coeff_hold;
+	double sum, error;
 	for(k=0;k<iterations;k++){
 		
 		printf("----------------k=%d--------------------\n", k);
@@ -143,8 +145,105 @@ void train_reg(char *networkID, int coefficients, double *training, int trainSam
 		fprintf(coefFile, "%.8f ", coeff[i]);
 	}
 	
+	fclose(coefFile);
+	
 	return;
 }
+
+
+void regression(char *networkID, int coefficients, double *training, int trainSamples, double learning_rate, int iterations){
+	/*Load coeff from file*/
+	FILE *coefFile;
+	double coeff[coefficients];
+	
+	char inputFileName[50] = "Coefficients/cf_";
+	strcat(inputFileName,networkID);
+	strcat(inputFileName,".txt");
+	
+	//copy coefficients from file
+	coefFile = fopen(inputFileName,"r");
+	if(coefFile == NULL){
+		fprintf(stderr, "Error opening COEF file\n");
+		return;
+	}
+	
+	int i;
+	for(i=0;i<coefficients;i++){
+		fscanf(coefFile,"%lf",&coeff[i]);
+	}
+	
+	fclose(coefFile);
+	
+	
+	int j,k,l;
+	//double sum, error, error_sq, tot_error_sq, tot_error;
+	double coeff_delta, sum;
+	double coeff_delta_array[coefficients];
+	double error_array[trainSamples];
+	for(k=0;k<iterations;k++){
+
+	
+		//Calculate errors
+		for(j=0;j<trainSamples;j++){
+			sum = 0;
+			for(l=0;l<coefficients;l++){
+				sum += coeff[l] * pow(j,l);
+			}
+			printf("sum: %lf\n",sum);
+			
+			//error_array[j] = sum - training[j];
+			error_array[j] = training[j] - sum;
+			printf("error_array[%d]: %lf\n",j,error_array[j]);
+		}
+	
+		//calculate deltas for each coeff
+		for(i=0;i<coefficients;i++){
+			coeff_delta = 0;
+			for(j=0;j<trainSamples;j++){
+				if( (i==0) || (j==0) ){
+					coeff_delta += error_array[j];
+				}
+				else{
+					coeff_delta += error_array[j];
+				}
+			}
+			printf("coeff_delta: %lf\n",coeff_delta);
+			
+			coeff_delta_array[i] = coeff_delta;
+			printf("coeff_delta_array[%d]: %lf\n",i,coeff_delta_array[i]);
+		}
+		
+		
+		//Apply deltas to coeff
+		for(i=0;i<coefficients;i++){
+			coeff[i] += learning_rate * coeff_delta_array[i];
+		}
+		
+		
+		printf("----------------k=%d--------------------\n", k);
+		for(i=0;i<coefficients;i++){
+			printf("Coeff[%d]: %lf\n", i, coeff[i]);
+		}
+		printf("---------------------------------------\n");
+		
+	}
+	
+	//write back new coefficients
+	coefFile = fopen(inputFileName,"w");
+	if(coefFile == NULL){
+		fprintf(stderr, "Error opening COEF file\n");
+		return;
+	}
+	
+	for(i=0;i<coefficients;i++){
+		fprintf(coefFile, "%.8f ", coeff[i]);
+	}
+	
+	fclose(coefFile);
+	
+	return;
+}
+
 
 //Activation function for passing on
 double sigmoid(double x){
