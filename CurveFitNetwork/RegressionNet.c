@@ -182,13 +182,6 @@ int main(void){
 
 	regression(4, scan1, 10, obj);
 	
-	int j;
-	for(i=0;i<coefficients;i++){
-		for(j=0;j<coefficients;j++){
-			printf("%lf ",obj -> Ainv[i][j]);
-		}
-		printf("\n");
-	}
 	
 	printf("\n--Coefficients--\n");
 	
