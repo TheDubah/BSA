@@ -12,12 +12,79 @@ typedef struct object {
 } Object;
 
 
-void inv(Object *obj){
-	
+
+void inv(int mat_size, Object *obj){
+
+    //FILLING INVERSE MATRIX - 1's in pivots, 0's everywhere else
+    int j,k,l,m,row,col;
+
+    for(row = 0; row < mat_size; row++){
+
+        for(col = 0; col<mat_size;col++){
+
+            if(row == col){
+
+                obj -> Ainv[row][col] = 1;
+
+            }
+
+            else{
+
+                obj -> Ainv[row][col] = 0;
+
+            }
+
+        }
+
+    }
+
+   
+
+    double pivot, neg_pivot;
+
+    for(k = 0; k < mat_size;k++){//row
+
+        pivot = obj -> A[k][k];//get value at pivot position
+
+        for(m = 0;m<mat_size;m++){//divide the whole row by that value at pivot position
+
+                obj -> A[k][m] /= pivot;
+
+                obj -> Ainv[k][m] /= pivot;
+
+        }
+
+        for(l = 0;l<mat_size;l++){//if row == row of pivot, skip over
+
+            if(l == k){
+
+                continue;
+
+            }
+
+            else{
+
+                neg_pivot = -1.0*obj -> A[l][k];//get negative value of other row to multiply with '1' to create 0 in that column               
+
+                for(j= 0;j<mat_size;j++){//create 0 in that column's row, and go to next row to create 0
+
+                        obj -> A[l][j] += (obj -> A[k][j]*neg_pivot);
+
+                        obj -> Ainv[l][j] += (obj -> Ainv[k][j]*neg_pivot);
+
+                }
+
+            }
+
+        }
+
+    }
+    
 	return;
 }
 
-
+//Calulates regression nth polynomial (determined by coefficients) over a set of inputs and uses fields in object struct
+// to communicate between function calls.
 void regression(int coefficients, double *input, int inputSamples, Object *obj){
 	
 	//init obj coefficent array and A and inverse A matrices to zeros
@@ -82,9 +149,9 @@ void regression(int coefficients, double *input, int inputSamples, Object *obj){
 	}
 	
 	//get inverse of A
-	inv(obj);
+	inv(coefficients,obj);
 	
-	//dot product: Coeff = inverse A (dot) Bee
+	//dot product: Coeff = inverse A (dot) Bee and set them in object struct
 	double dotSum;
 	for(n=0;n<coefficients;n++){
 		dotSum = 0;
@@ -93,6 +160,8 @@ void regression(int coefficients, double *input, int inputSamples, Object *obj){
 		}
 		obj -> coeff[n] = dotSum;
 	}
+	
+	
 	return;
 }
 
@@ -111,7 +180,7 @@ int main(void){
 	
 	double scan1[10] = {10,5,3,2,1,2,3,5,10,15};
 
-	regression(3, scan1, 9, obj);
+	regression(4, scan1, 10, obj);
 	
 	int j;
 	for(i=0;i<coefficients;i++){
