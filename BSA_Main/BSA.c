@@ -12,6 +12,7 @@
 #include "sensors.h" //-> Used for obtaining distances from left and right receivers
 #include "ssc32usb.h" //-> Used for arm movement
 #include "neuralnet.h" //-> Used for Neural Network functionality
+#include "regression.h" //-> Used for polynomial regression
 
 #define PINGCOUNT 1
 #define SCAN1BUFFER 10
@@ -24,32 +25,25 @@
 #define STARTINGZ 25
 #define DIST2OBJ 70
 
+#define COEFFICIENTS 3
+
 #define SCAN1TRIM 100
 
 //Neural Network Macros
-#define SEED 42 
+#define SEED 117
 
-
-//Main object struct that holds any vital information about an object
-typedef struct object {
-	int mid_point;
-	double side1Net_result[SIDE1OUTPUT];
-	double side2Net_result[SIDE2OUTPUT];
-	double side3Net_result[SIDE3OUTPUT];
-	double shapeNet_result[SHAPEOUTPUT];
-} Object;
 
 
 //main program/operation flow
 int main(void){
 	
 	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//newNet("Side3Net",SEED,SIDE3INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
 
 	//fullTrain("ShapeNet",1,1,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	//fullTrain("Side1Net",1,5,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	fullTrain("Side1Net",1,1,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//fullTrain("Side2Net",1,5,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//fullTrain("Side3Net",1,5,SIDE2INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
 	//return 1;
@@ -81,9 +75,9 @@ int main(void){
 	
 	//Variables used later, names give some idea but read further
 	int i,j,m;
-	double left_ping, right_ping;
-	double right_buffer[SCAN1BUFFER], left_buffer[SCAN1BUFFER];
-	int left_valid, right_valid;
+	double left_ping;//, right_ping;
+	double left_buffer[SCAN1BUFFER];//, right_buffer[SCAN1BUFFER]
+	int left_valid;//, right_valid;
 	int object_started = 0;
 	int object_start, object_end;
 	
@@ -101,10 +95,16 @@ int main(void){
 	double scan2R[500];
 	double scan3R[500];
 	
+	double scan1Filt[500];
+	
 	int a = 0; //index for saving into scan1 array
 	int b,c;
 	
 	char g; //used for press enter to continue
+	
+	for(i=0;i<SCAN1BUFFER;i++){
+		left_buffer[i] = 9999;
+	}
 	
 	/*The major for-loop for the stage1 scan that goes ~180 deg to scan for objects*/
 	//for(i=0;i<700;i=i+1){
@@ -116,7 +116,7 @@ int main(void){
 		
 		//used as counters when going back through buffer to count how many pings are proper object pings. left_valid for Left reciever and right_valid is for Right sensor.
 		left_valid = 0;
-		right_valid = 0;
+		//right_valid = 0;
 		
 		/***************************************************/
 		//left sensor pings with LgetCM(). PINGCOUNT is the number of times to ping and return the lowest ping distance from the count. can be adjusted with MACRO above.
@@ -139,7 +139,7 @@ int main(void){
 		
 		
 		/*ENTIRE PROCESS IS REPEATED FOR RIGHT PING*/
-		right_ping = RgetCM(PINGCOUNT) * 10;
+		/*right_ping = RgetCM(PINGCOUNT) * 10;
 
 		for(j=SCAN1BUFFER-1;j>0;j--){
 			right_buffer[j] = right_buffer[j-1];
@@ -149,22 +149,22 @@ int main(void){
 		}
 		right_buffer[0] = right_ping;
 		
-		printf("Right Echo: %lf\n",right_ping);
+		printf("Right Echo: %lf\n",right_ping);*/
 		
 		/***************************************************/
 		
 		//Store scan1 pings if sweep discovered object
 		if(object_started == 1){
 			scan1[a] = left_ping;
-			scan1R[a] = right_ping;
+			//scan1R[a] = right_ping;
 			printf("%d: %lf\n",a,scan1[a]);
 			a++;
 		}
 		
 		//These two if statements are used to look back at array in this iteration of loop to see if we have enough valid pings (4) to safely
 		// mark an edge of an object. If object_started is 0 (initial state) then it is marked with 1 and the object_start base pulse is saved.
-		//if(left_valid>=(SCAN1BUFFER/2) && object_started==0){
-		if(left_valid>=(SCAN1BUFFER/2) && right_valid>=(SCAN1BUFFER/2) && object_started==0){	
+		if(left_valid>=(SCAN1BUFFER/2) && object_started==0){
+		//if(left_valid>=(SCAN1BUFFER/2) && right_valid>=(SCAN1BUFFER/2) && object_started==0){	
 			object_started = 1;
 			object_start = m-(SCAN1BUFFER/2);
 			printf("------------------Object Start @ m=%d------------------\n",m-(SCAN1BUFFER/2));
@@ -179,8 +179,8 @@ int main(void){
 
 		// If object_started is 1 and there are less than 4 valid pings, this means you are no longer looking at object and must now mark
 		// object end. object_started is 0 and base pulse is saved in object_end.
-		//if(left_valid<(SCAN1BUFFER/2) && object_started==1){
-		if(left_valid<(SCAN1BUFFER/2) && right_valid<(SCAN1BUFFER/2) && object_started==1){
+		if(left_valid<(SCAN1BUFFER/2) && object_started==1){
+		//if(left_valid<(SCAN1BUFFER/2) && right_valid<(SCAN1BUFFER/2) && object_started==1){
 			object_started = 0;
 			object_end = m-(SCAN1BUFFER/2);
 			printf("------------------Object End @ m=%d------------------\n",m-(SCAN1BUFFER/2));
@@ -203,10 +203,84 @@ int main(void){
 			printf("\nPlease enter side for logs \n");
 			fgets(side4Log, 20, stdin);
 			
+			
+			//FILTERING
+			int unique[50];
+			int isUnique;
+			int mode = 0;
+			int max_repeat = 0;
+			int repeat = 0;
+			int uIndex = 0;
+			//init to -1 so uniques are defined at impossible starting point
+			for(i=0;i<50;i++){
+				unique[i] = -1;
+			}
+			
+			//Filtering
+			//Loop for going through all points in scan
+			for(i=0;i<a;i++){
+				isUnique = 1;
+				
+				//loop to check if current scan value is unique(new)
+				for(j=0;j<50;j++){
+					if( (int)floor(scan1[i]) == unique[j] ){
+						isUnique = 0;
+					}
+				}
+				
+				//if it remains unique after checking all uniques add to unique and check how many (mode)
+				if(isUnique == 1){
+					unique[uIndex] = (int)floor(scan1[i]);
+					
+					repeat = 1;
+					for(j=i;j<a;j++){
+						if( (int)floor(scan1[j]) == (unique[uIndex])){
+							repeat++;
+						}
+					}
+					
+					//if largest count of this unique value, set as mode
+					if(repeat > max_repeat){
+						max_repeat = repeat;
+						mode = unique[uIndex];
+					}
+					uIndex++;
+				}
+			}
+			
+			
+			//Actual filtering
+			int scan1FiltMax = 0;
+			for(i=0;i<a;i++){
+				if( (scan1[i] < (mode + 50)) && (scan1[i] > (mode - 50)) ){
+					scan1Filt[scan1FiltMax] = scan1[i];
+					scan1FiltMax++;
+				}
+			}
+			
+			
+			
+			writeRawScan("Scan1",scan1Filt,scan1FiltMax);
 			writeRawLog("Scan1_Log",scan1,a,side4Log);
-			writeRawLog("Scan1R_Log",scan1R,a,side4Log);
-			writeRawScan("Scan1",scan1,a);
-			writeRawScan("Scan1R",scan1R,a);
+			writeRawLog("Scan1_Log",scan1Filt,scan1FiltMax,side4Log);
+			
+			/*CURVE FITTING*/
+			regression(COEFFICIENTS, scan1Filt,scan1FiltMax,obj);
+			
+			writeTrainInput("Side1Net",obj -> coeff,COEFFICIENTS);
+			
+			//100 points from vertex
+			/*int vertIndex = -(obj -> coeff[1]) / 2*(obj -> coeff[2]);
+			printf("vertIndex: %d\n", vertIndex);
+			
+			int vertStart = vertIndex - 50;*/
+			
+			double scan1Delta[scan1FiltMax];
+			//for(i=vertStart;i<vertStart+101;i++){
+			for(i=2000;i<2100;i=i+5){
+				scan1Delta[i] = (((obj -> coeff[2])*pow(i+1,2)) + ((obj -> coeff[1])*pow(i+1,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				printf("Delta: %lf\n", scan1Delta[i]);
+			}
 			
 			return 0;
 			

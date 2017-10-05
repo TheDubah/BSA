@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-
 #define MAXCOEFFICIENTS 5
 
 typedef struct object {
