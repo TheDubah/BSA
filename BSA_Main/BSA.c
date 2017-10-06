@@ -24,13 +24,14 @@
 #define STARTINGY 130
 #define STARTINGZ 25
 #define DIST2OBJ 70
+#define BIGDELTA 1000
 
 #define COEFFICIENTS 3
 
 #define SCAN1TRIM 100
 
 //Neural Network Macros
-#define SEED 117
+#define SEED 900
 
 
 
@@ -42,11 +43,11 @@ int main(void){
 	//newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//newNet("Side3Net",SEED,SIDE3INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
 
-	//fullTrain("ShapeNet",1,1,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	fullTrain("Side1Net",1,1,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	//fullTrain("Side2Net",1,5,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	//fullTrain("Side3Net",1,5,SIDE2INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
-	//return 1;
+	//fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+	fullTrain("Side1Net",0.1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+	//fullTrain("Side3Net",1,10,SIDE2INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
+	return 1;
 
 	/*double input1[9] = {1.0, 0.01, 0.01, 1.0, 0.01, 0.01, 1.0, 0.01, 0.01};
 	double input2[9] = {0.01, 1.00, 0.01, 1.00, 0.01, 0.01, 1.00, 0.01, 0.01};
@@ -63,7 +64,7 @@ int main(void){
 		printf("%d: %lf\n",l,result2[l]);
 	}
 	
-	while(1);*/
+	return 1;*/
 	
 	//For sensors setup
 	setup();
@@ -267,19 +268,28 @@ int main(void){
 			/*CURVE FITTING*/
 			regression(COEFFICIENTS, scan1Filt,scan1FiltMax,obj);
 			
-			writeTrainInput("Side1Net",obj -> coeff,COEFFICIENTS);
+			int deltaStart = (scan1FiltMax/2) - (BIGDELTA/2);
 			
-			//100 points from vertex
-			/*int vertIndex = -(obj -> coeff[1]) / 2*(obj -> coeff[2]);
-			printf("vertIndex: %d\n", vertIndex);
 			
-			int vertStart = vertIndex - 50;*/
-			
-			double scan1Delta[scan1FiltMax];
+			//Calculate deltas for input into side network
+			double scan1Delta[SIDE1INPUT];
+			int deltaIndex = 0;
+			int trueDelta = BIGDELTA/SIDE1INPUT;
 			//for(i=vertStart;i<vertStart+101;i++){
-			for(i=2000;i<2100;i=i+5){
-				scan1Delta[i] = (((obj -> coeff[2])*pow(i+1,2)) + ((obj -> coeff[1])*pow(i+1,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
-				printf("Delta: %lf\n", scan1Delta[i]);
+			for(i=deltaStart;i<deltaStart+BIGDELTA;i=i+trueDelta){
+				scan1Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				printf("Delta: %lf\n", scan1Delta[deltaIndex]);
+				deltaIndex++;
+			}
+			writeTrainInput("Side1Net",scan1Delta,SIDE1INPUT);
+			
+			writeRawLog("Scan1Inputs_Log",scan1Delta,SIDE1INPUT,side4Log);
+			
+			double *result1;
+			result1 = computeShape("Side1Net",scan1Delta);
+			int l;
+			for(l=0;l<SIDE1OUTPUT;l++){
+				printf("%d: %lf\n",l,result1[l]);
 			}
 			
 			return 0;

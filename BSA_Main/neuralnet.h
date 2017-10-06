@@ -7,7 +7,7 @@
 #include <time.h>
 
 #define SIDE1INPUT 20
-#define SIDE1HIDDEN 15
+#define SIDE1HIDDEN 8
 #define SIDE1OUTPUT 2
 
 #define SIDE2INPUT 20
