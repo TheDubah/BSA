@@ -6,8 +6,8 @@
 #include <math.h>
 #include <time.h>
 
-#define SIDE1INPUT 2
-#define SIDE1HIDDEN 1000
+#define SIDE1INPUT 10
+#define SIDE1HIDDEN 500
 #define SIDE1OUTPUT 2
 
 #define SIDE2INPUT 20
@@ -1479,6 +1479,30 @@ void writeRawScan(char *fileName, double *inputData, int dataSize){
 	return;
 }
 
+void writeRawScanAppend(char *fileName, double *inputData, int dataSize){
+	
+	FILE *trainFile;
+	
+	char inputFileName[50] = "RawData/";
+	strcat(inputFileName,fileName);
+	strcat(inputFileName,".txt");
+	
+	trainFile = fopen(inputFileName,"a");
+	if(trainFile == NULL){
+		fprintf(stderr, "Error opening training file\n");
+		return;
+	}
+	
+	int i;
+	for(i=0;i<dataSize;i++){
+		fprintf(trainFile, "%.8f\n", inputData[i]);
+	}
+	
+	fclose(trainFile);
+	
+	return;
+}
+
 
 //Write raw data with tags
 void writeRawLog(char *fileName, double *inputData, int dataSize, char tag[20]){
@@ -1510,3 +1534,69 @@ void writeRawLog(char *fileName, double *inputData, int dataSize, char tag[20]){
 	
 	return;
 }
+
+/*double maxfromFile(char *fileName, int dataSize){
+	FILE *trainFile;
+	
+	char inputFileName[50] = "RawData/";
+	strcat(inputFileName,fileName);
+	strcat(inputFileName,".txt");
+	
+	trainFile = fopen(inputFileName,"r");
+	if(trainFile == NULL){
+		fprintf(stderr, "Error opening RawUnscaled file\n");
+		return -1;
+	}
+	
+	int i;
+	double hold;
+	double max = 0;
+	double min = 0;
+	for(i=0;i<dataSize;i++){
+		fscanf(trainFile, "%lf\n", &hold);
+		if(hold > max){
+			max = hold;
+		}
+		
+		if(hold < min){
+			min = hold;
+		}
+	}
+	
+	fclose(trainFile);
+	
+	//Grab greatest magnitude from file
+	if(-min > max){
+		max = -min;
+	}
+	
+	return max;
+}*/
+
+/*void scaleTrain(char *fileName, double max, char *networkID, int dataSize){
+	FILE *RawFile;
+	
+	char inputFileName[50] = "RawData/";
+	strcat(inputFileName,fileName);
+	strcat(inputFileName,".txt");
+	
+	RawFile = fopen(inputFileName,"r");
+	if(RawFile == NULL){
+		fprintf(stderr, "Error opening RawUnscaled file\n");
+		return;
+	}
+	
+	int i;
+	double hold;
+	double scaledinputs[dataSize];
+	for(i=0;i<dataSize;i++){
+		fscanf(RawFile, "%lf\n", &hold);
+		scaledinputs[i] = hold / max;
+	}
+	
+	fclose(RawFile);
+	
+	writeTrainInput("Side1Net",scaledinputs,dataSize);
+	
+	return;
+}*/

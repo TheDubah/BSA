@@ -268,24 +268,27 @@ int main(void){
 			regression(COEFFICIENTS, scan1Filt,scan1FiltMax,obj);
 			
 			//Grab coefficients for 1st and 2nd power (no constant)
-			double side1realCoeff[COEFFICIENTS-1];
+			/*double side1realCoeff[COEFFICIENTS-1];
 			for(i=1;i<COEFFICIENTS;i++){
 				side1realCoeff[i-1] = obj->coeff[i];
 			}
 			
 			double *side1result = computeSide1("Side1Net",side1realCoeff);
 			
+			printf("CoeffInputs:\n"); 
+			for(i=0;i<COEFFICIENTS;i++){
+				printf("%lf ",obj->coeff[i]);
+			}
+			printf("\n");
+			
+			printf("Side1Result:\n"); 
 			for(i=0;i<SIDE1OUTPUT;i++){
 				obj -> side1Net_result[i] = side1result[i];
 				printf("%lf ",obj -> side1Net_result[i]);
 			}
-			
-			/*for(i=0;i<COEFFICIENTS;i++){
-				printf("%lf ",obj->coeff[i]);
-			}
 			printf("\n");*/
 			
-			/*int deltaStart = (scan1FiltMax/2) - (BIGDELTA/2);
+			int deltaStart = (scan1FiltMax/2);
 			
 			//Calculate deltas for input into side network
 			double scan1Delta[SIDE1INPUT];
@@ -297,16 +300,25 @@ int main(void){
 				printf("Delta: %lf\n", scan1Delta[deltaIndex]);
 				deltaIndex++;
 			}
-			writeTrainInput("Side1Net",scan1Delta,SIDE1INPUT);
+			
+			double scan1DeltaScaled[SIDE1INPUT];
+			for(i=0;i<SIDE1INPUT;i++){
+				scan1DeltaScaled[i] = scan1Delta[i] / 1000;
+			}
+			
+			//writeTrainInput("Side1Net",scan1DeltaScaled,SIDE1INPUT);
 			
 			writeRawLog("Scan1Inputs_Log",scan1Delta,SIDE1INPUT,side4Log);
 			
 			double *result1;
-			result1 = computeShape("Side1Net",scan1Delta);
-			int l;
+			result1 = computeSide1("Side1Net",scan1DeltaScaled);
+			/*int l;
 			for(l=0;l<SIDE1OUTPUT;l++){
 				printf("%d: %lf\n",l,result1[l]);
 			}*/
+			
+			printf("FLAT: %lf\n",result1[0]);
+			printf("CURVE: %lf\n",result1[1]);
 			
 			return 0;
 			
