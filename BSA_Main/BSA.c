@@ -97,6 +97,7 @@ int main(void){
 	double scan3R[500];
 	
 	double scan1Filt[500];
+	double scan2Filt[500];
 	
 	int a = 0; //index for saving into scan1 array
 	int b,c;
@@ -317,16 +318,13 @@ int main(void){
 				printf("%d: %lf\n",l,result1[l]);
 			}*/
 			
-			printf("FLAT: %lf\n",result1[0]);
-			printf("CURVE: %lf\n",result1[1]);
-			
-			return 0;
-			
+			printf("Side1 FLAT: %lf\n",result1[0]);
+			printf("Side1 CURVE: %lf\n",result1[1]);
 
 			
 			/*Get close to object within certain distance*/
 			double y_ping = LgetCM(PINGCOUNT) * 10; //to get mm from cm ping
-			double y_pingR = RgetCM(PINGCOUNT) * 10;
+			//double y_pingR = RgetCM(PINGCOUNT) * 10;
 			while(y_ping > DIST2OBJ){
 				y_ping = LgetCM(PINGCOUNT) * 10; //to get mm for cm
 				printf("Y_PING: %lf\n",y_ping);
@@ -334,11 +332,29 @@ int main(void){
 				coord2pulse(y,z,0,1);
 			}
 			
-			int flag = 0;
+			//int flag = 0;
+			int flag;
 			y_ping = LgetCM(PINGCOUNT);
 			
 			b = 0;
 			int scan2_valid = SCAN2BUFFER;
+			
+			
+	//STEPHANES FUNCTION FOR TESTING ONLY		
+			while(b<50){
+				y_ping = LgetCM(PINGCOUNT) * 10;
+				scan2[b] = y_ping;
+				coord2pulse(y,z++,0,1);
+				printf("%lf\n",scan2[b]);
+				b++;
+			}
+			
+			
+			
+			
+			
+			
+	/*		
 			while((scan2_valid > 0) && (flag == 0)){
 				y_ping = LgetCM(PINGCOUNT) * 10;
 				
@@ -348,8 +364,8 @@ int main(void){
 					scan2_valid--;
 				}
 				
-				y_pingR = RgetCM(PINGCOUNT) * 10;
-				scan2R[b] = y_pingR;
+				//y_pingR = RgetCM(PINGCOUNT) * 10;
+				//scan2R[b] = y_pingR;
 				
 				flag = coord2pulse(y,z++,0,1);
 				b++;
@@ -358,6 +374,102 @@ int main(void){
 			if(flag==1){
 				printf("Arm reached limit!\n");
 			}
+			
+			for(i=0;i<b;i++){
+				printf("%lf\n",scan2[i]);
+			}
+	*/		
+	
+	
+	
+	
+			//Side2 FILTERING
+			int side2_unique[50];
+			int side2_isUnique;
+			int side2_mode = 0;
+			int side2_max_repeat = 0;
+			int side2_repeat = 0;
+			int side2_uIndex = 0;
+			//init to -1 so uniques are defined at impossible starting point
+			for(i=0;i<50;i++){
+				side2_unique[i] = -1;
+			}
+			
+			//Filtering
+			//Loop for going through all points in scan
+			for(i=0;i<b;i++){
+				side2_isUnique = 1;
+				
+				//loop to check if current scan value is unique(new)
+				for(j=0;j<50;j++){
+					if( (int)floor(scan2[i]) == side2_unique[j] ){
+						side2_isUnique = 0;
+					}
+				}
+				
+				//if it remains unique after checking all uniques add to unique and check how many (mode)
+				if(side2_isUnique == 1){
+					side2_unique[side2_uIndex] = (int)floor(scan2[i]);
+					
+					side2_repeat = 1;
+					for(j=i;j<b;j++){
+						if( (int)floor(scan2[j]) == (side2_unique[side2_uIndex])){
+							side2_repeat++;
+						}
+					}
+					
+					//if largest count of this unique value, set as mode
+					if(side2_repeat > side2_max_repeat){
+						side2_max_repeat = side2_repeat;
+						side2_mode = side2_unique[side2_uIndex];
+					}
+					side2_uIndex++;
+				}
+			}
+			
+			
+			//Actual filtering
+			int scan2FiltMax = 0;
+			for(i=0;i<b;i++){
+				if( (scan2[i] < (side2_mode + 20)) && (scan2[i] > (side2_mode - 20)) ){
+					scan2Filt[scan2FiltMax] = scan2[i];
+					scan2FiltMax++;
+				}
+			}
+			
+			for(i=0;i<scan2FiltMax;i++){
+				printf("FILTERED: %lf\n",scan2Filt[i]);
+			}
+			
+			regression(COEFFICIENTS, scan2Filt,scan2FiltMax,obj);
+			
+			deltaStart = (scan2FiltMax/2);
+			
+			//Calculate deltas for input into side network
+			double scan2Delta[SIDE2INPUT];
+			deltaIndex = 0;
+			trueDelta = BIGDELTA/SIDE2INPUT;
+			//for(i=vertStart;i<vertStart+101;i++){
+			for(i=deltaStart;i<deltaStart+BIGDELTA;i=i+trueDelta){
+				scan2Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				printf("Delta: %lf\n", scan2Delta[deltaIndex]);
+				deltaIndex++;
+			}
+			
+			double scan2DeltaScaled[SIDE2INPUT];
+			for(i=0;i<SIDE2INPUT;i++){
+				scan2DeltaScaled[i] = scan2Delta[i] / 1000;
+			}
+			
+			writeTrainInput("Side2Net",scan2DeltaScaled,SIDE2INPUT);
+			
+			double *result2;
+			result2 = computeSide2("Side2Net",scan2DeltaScaled);
+			
+			printf("Side2 FLAT: %lf\n",result2[0]);
+			printf("Side2 CURVE: %lf\n",result2[1]);
+			
+			return 0;
 			
 			//Subtract out of bound pings from buffer checks
 			b = b - SCAN2BUFFER;
