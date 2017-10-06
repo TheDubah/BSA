@@ -6,8 +6,8 @@
 #include <math.h>
 #include <time.h>
 
-#define SIDE1INPUT 20
-#define SIDE1HIDDEN 12
+#define SIDE1INPUT 2
+#define SIDE1HIDDEN 1000
 #define SIDE1OUTPUT 2
 
 #define SIDE2INPUT 20

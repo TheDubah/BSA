@@ -39,15 +39,15 @@
 int main(void){
 	
 	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//newNet("Side3Net",SEED,SIDE3INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
 
 	//fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	fullTrain("Side1Net",10,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//fullTrain("Side2Net",0.01,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//fullTrain("Side3Net",1,10,SIDE2INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
-	return 1;
+	//return 1;
 
 	/*double input1[9] = {1.0, 0.01, 0.01, 1.0, 0.01, 0.01, 1.0, 0.01, 0.01};
 	double input2[9] = {0.01, 1.00, 0.01, 1.00, 0.01, 0.01, 1.00, 0.01, 0.01};
@@ -260,7 +260,6 @@ int main(void){
 			}
 			
 			
-			
 			writeRawScan("Scan1",scan1Filt,scan1FiltMax);
 			writeRawLog("Scan1_Log",scan1,a,side4Log);
 			writeRawLog("Scan1_Log",scan1Filt,scan1FiltMax,side4Log);
@@ -268,8 +267,25 @@ int main(void){
 			/*CURVE FITTING*/
 			regression(COEFFICIENTS, scan1Filt,scan1FiltMax,obj);
 			
-			int deltaStart = (scan1FiltMax/2) - (BIGDELTA/2);
+			//Grab coefficients for 1st and 2nd power (no constant)
+			double side1realCoeff[COEFFICIENTS-1];
+			for(i=1;i<COEFFICIENTS;i++){
+				side1realCoeff[i-1] = obj->coeff[i];
+			}
 			
+			double *side1result = computeSide1("Side1Net",side1realCoeff);
+			
+			for(i=0;i<SIDE1OUTPUT;i++){
+				obj -> side1Net_result[i] = side1result[i];
+				printf("%lf ",obj -> side1Net_result[i]);
+			}
+			
+			/*for(i=0;i<COEFFICIENTS;i++){
+				printf("%lf ",obj->coeff[i]);
+			}
+			printf("\n");*/
+			
+			/*int deltaStart = (scan1FiltMax/2) - (BIGDELTA/2);
 			
 			//Calculate deltas for input into side network
 			double scan1Delta[SIDE1INPUT];
@@ -290,7 +306,7 @@ int main(void){
 			int l;
 			for(l=0;l<SIDE1OUTPUT;l++){
 				printf("%d: %lf\n",l,result1[l]);
-			}
+			}*/
 			
 			return 0;
 			
