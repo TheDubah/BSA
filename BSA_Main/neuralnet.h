@@ -7,15 +7,15 @@
 #include <time.h>
 
 #define SIDE1INPUT 20
-#define SIDE1HIDDEN 8
+#define SIDE1HIDDEN 12
 #define SIDE1OUTPUT 2
 
 #define SIDE2INPUT 20
-#define SIDE2HIDDEN 15
+#define SIDE2HIDDEN 12
 #define SIDE2OUTPUT 2
 
 #define SIDE3INPUT 20
-#define SIDE3HIDDEN 15
+#define SIDE3HIDDEN 12
 #define SIDE3OUTPUT 2
 
 #define SHAPEINPUT 6
@@ -847,14 +847,18 @@ void fullTrain(char *networkID, double learning_rate, double percent_error, int 
 			/*ADJUST WEIGHTS WITH ERRORS*/
 			for(i=0;i<outputNodes;i++){
 				for(j=0;j<hiddenNodes;j++){
+					//printf("BEFORE_who: %lf\n",w_ho[i][j]);
 					w_ho[i][j] += learning_rate * (output_error[i][0] * sigmoid(final_output[i][0]) * (1 - sigmoid(final_output[i][0]))) * hidden_output[j][0];
+					//printf("AFTER_who: %lf\n",w_ho[i][j]);
 				}
 			}
 			
 			//w_ih adjustment
 			for(i=0;i<hiddenNodes;i++){
 				for(j=0;j<inputNodes;j++){
+					//printf("BEFORE_wih: %lf\n",w_ih[i][j]);
 					w_ih[i][j] += learning_rate * (hidden_errors[i][0] * sigmoid(hidden_output[i][0]) * (1 - sigmoid(hidden_output[i][0]))) * inputs[j][0];
+					//printf("AFTER_wih: %lf\n",w_ih[i][j]);
 				}
 			}
 			
