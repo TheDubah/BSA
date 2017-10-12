@@ -25,6 +25,7 @@
 #define STARTINGZ 25
 #define DIST2OBJ 70
 #define BIGDELTA 1000
+#define SCALEFACTOR 10000
 
 #define COEFFICIENTS 3
 
@@ -45,7 +46,7 @@ int main(void){
 
 	//fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
 	//fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	//fullTrain("Side2Net",0.01,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+	//fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//fullTrain("Side3Net",1,10,SIDE2INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
 	//return 1;
 
@@ -304,7 +305,7 @@ int main(void){
 			
 			double scan1DeltaScaled[SIDE1INPUT];
 			for(i=0;i<SIDE1INPUT;i++){
-				scan1DeltaScaled[i] = scan1Delta[i] / 1000;
+				scan1DeltaScaled[i] = scan1Delta[i] / SCALEFACTOR;
 			}
 			
 			//writeTrainInput("Side1Net",scan1DeltaScaled,SIDE1INPUT);
@@ -313,10 +314,10 @@ int main(void){
 			
 			double *result1;
 			result1 = computeSide1("Side1Net",scan1DeltaScaled);
-			/*int l;
-			for(l=0;l<SIDE1OUTPUT;l++){
-				printf("%d: %lf\n",l,result1[l]);
-			}*/
+			for(i=0;i<SIDE1OUTPUT;i++){
+				obj -> side1Net_result[i] = result1[i];
+				//printf("sideNet1[%d]: %lf\n",i,obj -> side1Net_result[i]);
+			}
 			
 			printf("Side1 FLAT: %lf\n",result1[0]);
 			printf("Side1 CURVE: %lf\n",result1[1]);
@@ -337,10 +338,10 @@ int main(void){
 			y_ping = LgetCM(PINGCOUNT);
 			
 			b = 0;
-			int scan2_valid = SCAN2BUFFER;
+			//int scan2_valid = SCAN2BUFFER;
 			
 			
-	//STEPHANES FUNCTION FOR TESTING ONLY		
+			//STEPHANES FUNCTION FOR TESTING ONLY		
 			while(b<50){
 				y_ping = LgetCM(PINGCOUNT) * 10;
 				scan2[b] = y_ping;
@@ -348,9 +349,6 @@ int main(void){
 				printf("%lf\n",scan2[b]);
 				b++;
 			}
-			
-			
-			
 			
 			
 			
@@ -378,9 +376,7 @@ int main(void){
 			for(i=0;i<b;i++){
 				printf("%lf\n",scan2[i]);
 			}
-	*/		
-	
-	
+	*/
 	
 	
 			//Side2 FILTERING
@@ -458,16 +454,40 @@ int main(void){
 			
 			double scan2DeltaScaled[SIDE2INPUT];
 			for(i=0;i<SIDE2INPUT;i++){
-				scan2DeltaScaled[i] = scan2Delta[i] / 1000;
+				scan2DeltaScaled[i] = scan2Delta[i] / SCALEFACTOR;
 			}
 			
-			writeTrainInput("Side2Net",scan2DeltaScaled,SIDE2INPUT);
+			writeRawScan("Scan2",scan2Filt,scan2FiltMax);
+			writeRawLog("Scan2_Log",scan2,b,side4Log);
+			//writeTrainInput("Side2Net",scan2DeltaScaled,SIDE2INPUT);
 			
 			double *result2;
 			result2 = computeSide2("Side2Net",scan2DeltaScaled);
+			for(i=0;i<SIDE2OUTPUT;i++){
+				obj -> side2Net_result[i] = result2[i];
+				//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
+			}
+			
 			
 			printf("Side2 FLAT: %lf\n",result2[0]);
 			printf("Side2 CURVE: %lf\n",result2[1]);
+			
+			
+			//Identifying shape
+			double shapeInput[SHAPEINPUT];
+			shapeInput[0] = obj -> side1Net_result[0];
+			shapeInput[1] = obj -> side1Net_result[1];
+			shapeInput[2] = obj -> side2Net_result[0];
+			shapeInput[3] = obj -> side2Net_result[1];
+			
+			double *result3;
+			result3 = computeShape("ShapeNet",shapeInput);
+			
+			//copy result to obj struct
+			for(i=0;i<SHAPEOUTPUT;i++){
+				obj -> shapeNet_result[i] = result3[i];
+				printf("shapeNet[%d]: %lf\n",i,obj -> shapeNet_result[i]);
+			}
 			
 			return 0;
 			
@@ -750,11 +770,11 @@ int main(void){
 			}
 			printf("\n");
 			
-			result = computeSide3("Side3Net",scan3_deriv);
+			/*result = computeSide3("Side3Net",scan3_deriv);
 			for(i=0;i<SIDE3OUTPUT;i++){
 				obj -> side3Net_result[i] = result[i];
 				printf("sideNet3[%d]: %lf\n",i,obj -> side3Net_result[i]);
-			}
+			}*/
 			printf("\n");
 			printf("\n");
 			
@@ -772,10 +792,10 @@ int main(void){
 				k++;
 			}
 			
-			for(i=0;i<SIDE3OUTPUT;i++){
+			/*for(i=0;i<SIDE3OUTPUT;i++){
 				shapeNet_In[k] = obj -> side3Net_result[i];
 				k++;
-			}
+			}*/
 			
 			/*Propagate input through ShapeNet and copy to obj*/
 			result = computeShape("ShapeNet",shapeNet_In);

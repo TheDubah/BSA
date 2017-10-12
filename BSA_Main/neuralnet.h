@@ -18,8 +18,8 @@
 #define SIDE3HIDDEN 12
 #define SIDE3OUTPUT 2
 
-#define SHAPEINPUT 6
-#define SHAPEHIDDEN 6
+#define SHAPEINPUT 4
+#define SHAPEHIDDEN 500
 #define SHAPEOUTPUT 3
 
 

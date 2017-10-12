@@ -9,7 +9,6 @@ typedef struct object {
 	int mid_point;
 	double side1Net_result[SIDE1OUTPUT];
 	double side2Net_result[SIDE2OUTPUT];
-	double side3Net_result[SIDE3OUTPUT];
 	double shapeNet_result[SHAPEOUTPUT];
 	
 	double coeff[MAXCOEFFICIENTS];
