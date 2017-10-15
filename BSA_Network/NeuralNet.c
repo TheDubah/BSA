@@ -994,7 +994,7 @@ double *computeShape(char *networkID, double *input, int inputNodes, int hiddenN
 	return result;
 }
 
-void normalize_byPtr(double *input, int inputLength){
+void normalize_stat(double *input, int inputLength){
 	
 	double max = input[0];
 	double min = input[0];
@@ -1019,12 +1019,41 @@ void normalize_byPtr(double *input, int inputLength){
 	return;
 }
 
+void normalize_div(double *input, int inputLength){
+	
+	double max = input[0];
+	double min = input[0];
+	
+	//Finding max and min values from input array
+	int i;
+	for(i=0;i<inputLength;i++){
+		if(input[i] > max){
+			max = input[i];
+		}
+		
+		if(input[i] < min){
+			min = input[i];
+		}
+	}
+	
+	if(-min > max){
+		max = -min;
+	}
+	
+	//Normalizing between -1 and 1
+	for(i=0;i<inputLength;i++){
+		input[i] /= max;
+	}
+	
+	return;
+}
+
 int main(){
 	
 	//double input[20] = {-47.96285807,-42.93207642,-37.90129478,-32.87051314,-27.83973150,-22.80894986,-17.77816821,-12.74738657,-7.71660493,-2.68582329,2.34495835,7.37574000,12.40652164,17.43730328,22.46808492,27.49886656,32.52964821,37.56042985,42.59121149,47.62199313};
 	double input[20] = {-105.40582885,-94.30509355,-83.20435825,-72.10362296,-61.00288766,-49.90215237,-38.80141707,-27.70068178,-16.59994648,-5.49921119,5.60152411,16.70225941,27.80299470,38.90373000,50.00446529,61.10520059,72.20593588,83.30667118,94.40740648,105.50814177};
 	
-	normalize_byPtr(input,20);
+	normalize_div(input,20);
 	
 	int i;
 	for(i=0;i<20;i++){

@@ -10,6 +10,7 @@ typedef struct object {
 	double side1Net_result[SIDE1OUTPUT];
 	double side2Net_result[SIDE2OUTPUT];
 	double shapeNet_result[SHAPEOUTPUT];
+	int metaLabel;
 	
 	double coeff[MAXCOEFFICIENTS];
 	double A[MAXCOEFFICIENTS][MAXCOEFFICIENTS];
