@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <string.h>
 
 //MULTI-THREAD/ERROR HANDLING
 #include <signal.h>
@@ -38,6 +40,51 @@
 
 //main program/operation flow
 int main(void){
+	
+	/*User Input*/
+	//Ask user what object they want to grab
+	int i;
+	/*int invalidInput = 1;
+	const char cubeStr[20] = "CUBE";
+	const char cylStr[20] = "CYLINDER";
+	const char sphStr[20] = "SPHERE";
+	
+	while(invalidInput){
+		char userInput[20];
+		printf("Please enter shape to grab:\n");
+		fgets(userInput, 20, stdin);
+		
+		//Standardize to uppercase
+		for(i=0;i<20;i++){
+			userInput[i] = toupper(userInput[i]);
+		}
+	
+
+		//Obtain labelID from input
+		int userLabelID;
+		if(strcmp(userInput,cubeStr) == 0){
+			userLabelID = 0;
+			invalidInput = 0;
+		}
+		else if(strcmp(userInput,cylStr) == 0){
+			userLabelID = 1;
+			invalidInput = 0;
+		}
+		else if(strcmp(userInput,sphStr) == 0){
+			userLabelID = 2;
+			invalidInput = 0;
+		}
+		else if(strcmp(userInput,cubeStr) < 0){
+			printf("input less than CUBE\n");
+		}
+		else if(strcmp(userInput,cubeStr) > 0){
+			printf("input less than CUBE\n");
+		}
+		else{
+			printf("Invalid input\n");
+		}
+	}
+	return 1;*/
 	
 	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
 	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
@@ -76,7 +123,7 @@ int main(void){
 	coord2pulse(y,z,0,4000);
 	
 	//Variables used later, names give some idea but read further
-	int i,j,m;
+	int j,m;
 	double left_ping;//, right_ping;
 	double left_buffer[SCAN1BUFFER];//, right_buffer[SCAN1BUFFER]
 	int left_valid;//, right_valid;
@@ -505,20 +552,14 @@ int main(void){
 			return 0;
 		}
 		
-	}
-	
-	//Print the xyz coordinates for the start and stop of object in scan1
-	//printf("--Object Start XYZ--\n");
-	//printf("X: %lf\n",objectStart_xyz[0]);
-	//printf("Y: %lf\n",objectStart_xyz[1]);
-	//printf("Z: %lf\n",objectStart_xyz[2]);
-	
-	//printf("--Object End XYZ--\n");
-	//printf("X: %lf\n",objectEnd_xyz[0]);
-	//printf("Y: %lf\n",objectEnd_xyz[1]);
-	//printf("Z: %lf\n",objectEnd_xyz[2]);
-	
-	
+		
+		/*Object Matching*/
+		//Loop through scanned and identified objects and see if they match what the user requested
+		
+		
+		/*Object Relocation*/
+		
+	}	
 	
 	
 	
