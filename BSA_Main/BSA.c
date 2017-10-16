@@ -89,12 +89,14 @@ int main(void){
 	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
 	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	//newNet("Side3Net",SEED,SIDE3INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
+	//newNet("Side1NetSmall",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//newNet("Side2NetSmall",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 
 	//fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
 	//fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	//fullTrain("Side3Net",1,10,SIDE2INPUT,SIDE3HIDDEN,SIDE3OUTPUT);
+	//fullTrain("Side1NetSmall",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//fullTrain("Side2NetSmall",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//return 1;
 
 	/*double input1[9] = {1.0, 0.01, 0.01, 1.0, 0.01, 0.01, 1.0, 0.01, 0.01};
@@ -359,6 +361,7 @@ int main(void){
 			}
 			
 			//writeTrainInput("Side1Net",scan1DeltaScaled,SIDE1INPUT);
+			//writeTrainInput("Side1NetSmall",scan1DeltaScaled,SIDE1INPUT);
 			
 			writeRawLog("Scan1Inputs_Log",scan1Delta,SIDE1INPUT,side4Log);
 			
@@ -509,7 +512,9 @@ int main(void){
 			
 			writeRawScan("Scan2",scan2Filt,scan2FiltMax);
 			writeRawLog("Scan2_Log",scan2,b,side4Log);
+			
 			//writeTrainInput("Side2Net",scan2DeltaScaled,SIDE2INPUT);
+			//writeTrainInput("Side2NetSmall",scan2DeltaScaled,SIDE2INPUT);
 			
 			double *result2;
 			result2 = computeSide2("Side2Net",scan2DeltaScaled);
@@ -549,6 +554,9 @@ int main(void){
 			objects[curr_objInd] = obj;
 			curr_objInd++;
 			
+			printf("----------a + b: %d----------\n",a+b);
+			printf("----------a : %d----------\n",a);
+			printf("----------b: %d----------\n",b);			
 			return 0;
 		}
 		
