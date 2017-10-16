@@ -28,6 +28,7 @@
 #define DIST2OBJ 70
 #define BIGDELTA 1000
 #define SCALEFACTOR 10000
+#define SIZESEPERATOR 150
 
 #define COEFFICIENTS 3
 
@@ -235,6 +236,7 @@ int main(void){
 		if(left_valid<(SCAN1BUFFER/2) && object_started==1){
 		//if(left_valid<(SCAN1BUFFER/2) && right_valid<(SCAN1BUFFER/2) && object_started==1){
 			object_started = 0;
+			int a_size = a;
 			object_end = m-(SCAN1BUFFER/2);
 			printf("------------------Object End @ m=%d------------------\n",m-(SCAN1BUFFER/2));
 			
@@ -366,14 +368,27 @@ int main(void){
 			writeRawLog("Scan1Inputs_Log",scan1Delta,SIDE1INPUT,side4Log);
 			
 			double *result1;
-			result1 = computeSide1("Side1Net",scan1DeltaScaled);
-			for(i=0;i<SIDE1OUTPUT;i++){
-				obj -> side1Net_result[i] = result1[i];
-				//printf("sideNet1[%d]: %lf\n",i,obj -> side1Net_result[i]);
+			//BIG SHAPE
+			if(a_size > SIZESEPERATOR){
+				result1 = computeSide1("Side1Net",scan1DeltaScaled);
+				for(i=0;i<SIDE1OUTPUT;i++){
+					obj -> side1Net_result[i] = result1[i];
+					//printf("sideNet1[%d]: %lf\n",i,obj -> side1Net_result[i]);
+				}
+				printf("Side1Big FLAT: %lf\n",result1[0]);
+				printf("Side1Big CURVE: %lf\n",result1[1]);
 			}
-			
-			printf("Side1 FLAT: %lf\n",result1[0]);
-			printf("Side1 CURVE: %lf\n",result1[1]);
+			//SMALL SHAPE
+			else{
+				result1 = computeSide1("Side1NetSmall",scan1DeltaScaled);
+				for(i=0;i<SIDE1OUTPUT;i++){
+					obj -> side1Net_result[i] = result1[i];
+					//printf("sideNet1[%d]: %lf\n",i,obj -> side1Net_result[i]);
+					
+				}
+				printf("Side1Small FLAT: %lf\n",result1[0]);
+				printf("Side1Small CURVE: %lf\n",result1[1]);
+			}
 
 			
 			/*Get close to object within certain distance*/
@@ -391,8 +406,6 @@ int main(void){
 			y_ping = LgetCM(PINGCOUNT);
 			
 			b = 0;
-			
-			
 			
 			//STEPHANES FUNCTION FOR TESTING ONLY		
 			/*while(b<50){
@@ -422,6 +435,7 @@ int main(void){
 				flag = coord2pulse(y,z++,0,1);
 				b++;
 			}
+			int b_size = b;
 			//report that exit was based on limit
 			if(flag==1){
 				printf("Arm reached limit!\n");
@@ -517,23 +531,53 @@ int main(void){
 			//writeTrainInput("Side2NetSmall",scan2DeltaScaled,SIDE2INPUT);
 			
 			double *result2;
-			result2 = computeSide2("Side2Net",scan2DeltaScaled);
-			for(i=0;i<SIDE2OUTPUT;i++){
-				obj -> side2Net_result[i] = result2[i];
-				//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
+			//BIG SHAPE
+			if(a_size > SIZESEPERATOR){
+				result2 = computeSide2("Side2Net",scan2DeltaScaled);
+				for(i=0;i<SIDE2OUTPUT;i++){
+					obj -> side2Net_result[i] = result2[i];
+					//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
+				}
+				printf("Side2Big FLAT: %lf\n",result2[0]);
+				printf("Side2Big CURVE: %lf\n",result2[1]);
 			}
-			
-			
-			printf("Side2 FLAT: %lf\n",result2[0]);
-			printf("Side2 CURVE: %lf\n",result2[1]);
+			//SMALL SHAPE
+			else{
+				result2 = computeSide2("Side2NetSmall",scan2DeltaScaled);
+				for(i=0;i<SIDE2OUTPUT;i++){
+					obj -> side2Net_result[i] = result2[i];
+					//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
+				}
+				printf("Side2Small FLAT: %lf\n",result2[0]);
+				printf("Side2Small CURVE: %lf\n",result2[1]);
+			}
 			
 			
 			//Identifying shape
 			double shapeInput[SHAPEINPUT];
-			shapeInput[0] = obj -> side1Net_result[0];
-			shapeInput[1] = obj -> side1Net_result[1];
-			shapeInput[2] = obj -> side2Net_result[0];
-			shapeInput[3] = obj -> side2Net_result[1];
+			//BIG SHAPE
+			if(a_size > SIZESEPERATOR){
+				shapeInput[0] = obj -> side1Net_result[0];
+				shapeInput[1] = obj -> side1Net_result[1];
+				shapeInput[2] = obj -> side2Net_result[0];
+				shapeInput[3] = obj -> side2Net_result[1];
+				shapeInput[4] = 0.001;
+				shapeInput[5] = 0.001;
+				shapeInput[6] = 0.001;
+				shapeInput[7] = 0.001;
+				
+			}
+			//SMALL SHAPE
+			else{
+				shapeInput[0] = 0.001;
+				shapeInput[1] = 0.001;
+				shapeInput[2] = 0.001;
+				shapeInput[3] = 0.001;
+				shapeInput[4] = obj -> side1Net_result[0];
+				shapeInput[5] = obj -> side1Net_result[1];
+				shapeInput[6] = obj -> side2Net_result[0];
+				shapeInput[7] = obj -> side2Net_result[1];
+			}
 			
 			double *result3;
 			result3 = computeShape("ShapeNet",shapeInput);
@@ -542,7 +586,7 @@ int main(void){
 			double maxShapeProb = 0;
 			for(i=0;i<SHAPEOUTPUT;i++){
 				obj -> shapeNet_result[i] = result3[i];
-				printf("shapeNet[%d]: %lf\n",i,obj -> shapeNet_result[i]);
+				//printf("shapeNet[%d]: %lf\n",i,obj -> shapeNet_result[i]);
 				
 				if(obj -> shapeNet_result[i] > maxShapeProb){
 					maxShapeProb = obj -> shapeNet_result[i];
@@ -550,13 +594,20 @@ int main(void){
 				}
 			}
 			
+			printf("BigCube: %lf\n",obj -> shapeNet_result[0]);
+			printf("BigCylinder: %lf\n",obj -> shapeNet_result[1]);
+			printf("BigSphere: %lf\n",obj -> shapeNet_result[2]);
+			printf("SmallCube: %lf\n",obj -> shapeNet_result[3]);
+			printf("SmallCylinder: %lf\n",obj -> shapeNet_result[4]);
+			printf("SmallSphere: %lf\n",obj -> shapeNet_result[5]);
+			
 			//assign obj to objects array
 			objects[curr_objInd] = obj;
 			curr_objInd++;
 			
-			printf("----------a + b: %d----------\n",a+b);
-			printf("----------a : %d----------\n",a);
-			printf("----------b: %d----------\n",b);			
+			printf("----------a + b: %d----------\n",a_size + b_size);
+			printf("----------a : %d----------\n",a_size);
+			//printf("----------b: %d----------\n",b);			
 			return 0;
 		}
 		
