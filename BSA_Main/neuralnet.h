@@ -8,19 +8,19 @@
 
 #define SIDE1INPUT 10
 #define SIDE1HIDDEN 500
-#define SIDE1OUTPUT 2
+#define SIDE1OUTPUT 3
 
 #define SIDE2INPUT 10
 #define SIDE2HIDDEN 500
-#define SIDE2OUTPUT 2
+#define SIDE2OUTPUT 3
 
 #define SIDE3INPUT 20
 #define SIDE3HIDDEN 12
 #define SIDE3OUTPUT 2
 
-#define SHAPEINPUT 8
+#define SHAPEINPUT 6
 #define SHAPEHIDDEN 500
-#define SHAPEOUTPUT 6
+#define SHAPEOUTPUT 3
 
 
 /*These variables are part of all function parameters and are no longer MACROS in this file:
