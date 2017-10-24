@@ -21,7 +21,7 @@
 #define SCAN2BUFFER 5
 #define SCAN3BUFFER 5
 #define BORDER 200
-#define STARTBASE 1100
+#define STARTBASE 2100
 #define ENDPULSE 700
 #define STARTINGY 130
 #define STARTINGZ 25
@@ -30,6 +30,7 @@
 #define SCALEFACTOR 10000 //Scaling for training values to below 1
 #define SIZESEPERATOR 120 //Seperating value for big and small shapes
 #define SCAN2MIN 30 //Minimum scan before dyncamic buffer takes over to detect edge
+#define OBJECTSONPLANE 2
 
 #define COEFFICIENTS 3
 
@@ -143,6 +144,7 @@ int main(void){
 	int max_repeat;
 	int repeat;
 	int uIndex;
+	int scan2Valid_reset;
 	
 	//Smooth start
 	servo_command1(BASE_CH,STARTBASE,4000);
@@ -162,7 +164,7 @@ int main(void){
 	
 	//object struct array to hold objects
 	int curr_objInd = 0;
-	Object *objects[3];
+	Object *objects[OBJECTSONPLANE];
 	
 	
 	//initialize buffer with values that don't false trigger object start
@@ -281,7 +283,8 @@ int main(void){
 			
 			char side4Log[20];
 			printf("\nPlease enter side for logs \n");
-			fgets(side4Log, 20, stdin);
+			//fgets(side4Log, 20, stdin);
+			side4Log[1] = 'X';
 			
 			
 			//FILTERING
@@ -374,16 +377,17 @@ int main(void){
 			}
 			printf("\n");*/
 			
-			deltaStart = (scan1FiltMax/2);
+			//deltaStart = (scan1FiltMax/2);
+			deltaStart = 1;
 			
 			//Calculate deltas for input into side network
 			double scan1Delta[SIDE1INPUT];
 			int deltaIndex = 0;
 			int trueDelta = BIGDELTA/SIDE1INPUT;
-			//for(i=vertStart;i<vertStart+101;i++){
 			for(i=deltaStart;i<deltaStart+BIGDELTA;i=i+trueDelta){
 				//delta = [i+delta] - [i]
-				scan1Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				//scan1Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				scan1Delta[deltaIndex] = ((obj -> coeff[2])*pow(i+trueDelta,2)) - ((obj -> coeff[2])*pow(i,2));
 				printf("Delta: %lf\n", scan1Delta[deltaIndex]);
 				deltaIndex++;
 			}
@@ -407,7 +411,7 @@ int main(void){
 					//printf("sideNet1[%d]: %lf\n",i,obj -> side1Net_result[i]);
 				}
 				printf("Side1Big FLAT: %lf\n",result1[0]);
-				printf("Side1Big CURVE: %lf\n",result1[1]);
+				printf("Side1Big CURVE: %lf\n\n",result1[1]);
 			//}
 			//SMALL SHAPE
 			/*else{
@@ -457,7 +461,14 @@ int main(void){
 				scan2[b] = y_ping;
 				
 				if(y_ping > BORDER){
-					scan2_valid--;
+					scan2Valid_reset = 0;
+					if(scan2Valid_reset == 0){
+						scan2_valid--;
+					}
+				}
+				else{
+					scan2Valid_reset = 1;
+					scan2_valid = SCAN2BUFFER;
 				}
 				
 				//y_pingR = RgetCM(PINGCOUNT) * 10;
@@ -545,15 +556,16 @@ int main(void){
 			}
 			printf("\n");
 			
-			deltaStart = (scan2FiltMax/2);
-			
+			//deltaStart = (scan2FiltMax/2);
+			deltaStart = 1;
 			//Calculate deltas for input into side network
 			double scan2Delta[SIDE2INPUT];
 			deltaIndex = 0;
 			trueDelta = BIGDELTA/SIDE2INPUT;
-			//for(i=vertStart;i<vertStart+101;i++){
+			//for(i=1;i<vertStart+101;i++){
 			for(i=deltaStart;i<deltaStart+BIGDELTA;i=i+trueDelta){
-				scan2Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				//scan2Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
+				scan2Delta[deltaIndex] = ((obj -> coeff[2])*pow(i+trueDelta,2)) - ((obj -> coeff[2])*pow(i,2));
 				printf("Delta: %lf\n", scan2Delta[deltaIndex]);
 				deltaIndex++;
 			}
@@ -578,7 +590,7 @@ int main(void){
 					//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
 				}
 				printf("Side2Big FLAT: %lf\n",result2[0]);
-				printf("Side2Big CURVE: %lf\n",result2[1]);
+				printf("Side2Big CURVE: %lf\n\n",result2[1]);
 			//}
 			//SMALL SHAPE
 			/*else{
@@ -652,14 +664,48 @@ int main(void){
 			z = STARTINGZ;
 			coord2pulse(y,z,0,2000);
 			servo_command1(BASE_CH,m,2000);
-			return 0;
+			//return 0;
 		}		
 	}
 
 	/*Object Matching*/
 	//Loop through scanned and identified objects and see if they match what the user requested
-	for(m=0;m<3;m++){
-		printf("Obj[%d]: %d\n",i,objects[m] -> metaLabel);
+	for(m=0;m<OBJECTSONPLANE;m++){
+		//printf("Obj[%d]: %d\n",m,objects[m] -> metaLabel);
+		
+		if(objects[m] -> metaLabel == 0){
+			if(m==0){
+				printf("First object was a CUBE\n");
+			}
+			else if(m==1){
+				printf("Second object was a CUBE\n");
+			}
+			else if(m==2){
+				printf("Third object was a CUBE\n");
+			}
+		}
+		else if(objects[m] -> metaLabel == 1){
+			if(m==0){
+				printf("First object was a CYLINDER\n");
+			}
+			else if(m==1){
+				printf("Second object was a CYLINDER\n");
+			}
+			else if(m==2){
+				printf("Third object was a CYLINDER\n");
+			}
+		}
+		else if(objects[m] -> metaLabel == 2){
+			if(m==0){
+				printf("First object was a SPHERE\n");
+			}
+			else if(m==1){
+				printf("Second object was a SPHERE\n");
+			}
+			else if(m==2){
+				printf("Third object was a SPHERE\n");
+			}
+		}
 	}
 	
 	/*Object Relocation*/
