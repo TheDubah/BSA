@@ -24,13 +24,14 @@
 #define STARTBASE 2100
 #define ENDPULSE 700
 #define STARTINGY 130
-#define STARTINGZ 25
+#define STARTINGZ 50
 #define DIST2OBJ 70
 #define BIGDELTA 1000
 #define SCALEFACTOR 10000 //Scaling for training values to below 1
 #define SIZESEPERATOR 120 //Seperating value for big and small shapes
 #define SCAN2MIN 30 //Minimum scan before dyncamic buffer takes over to detect edge
 #define OBJECTSONPLANE 2
+#define SPEED 100
 
 #define COEFFICIENTS 3
 
@@ -90,17 +91,17 @@ int main(void){
 	return 1;*/
 	
 	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//newNet("Side1NetSmall",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//newNet("Side2NetSmall",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 
 	//fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	//fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	//fullTrain("Side1NetSmall",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
 	//fullTrain("Side2NetSmall",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	return 1;
+	//return 1;
 
 	/*double input1[9] = {1.0, 0.01, 0.01, 1.0, 0.01, 0.01, 1.0, 0.01, 0.01};
 	double input2[9] = {0.01, 1.00, 0.01, 1.00, 0.01, 0.01, 1.00, 0.01, 0.01};
@@ -175,11 +176,10 @@ int main(void){
 	/*The major for-loop for the stage1 scan that goes ~180 deg to scan for objects*/
 	//for(i=0;i<700;i=i+1){
 	for(m=STARTBASE;m>ENDPULSE;m--){
-
 		printf("m=%d\n",m);
 		
 		//STARTBASE is the constant starting pulse for the base servo. Can be adjusted with MACRO above.
-		servo_command1(BASE_CH,m,1);
+		servo_command1(BASE_CH,m,SPEED);
 		coord2pulse(y,z,0,1);
 		
 		//used as counters when going back through buffer to count how many pings are proper object pings. left_valid for Left reciever and right_valid is for Right sensor.
@@ -454,11 +454,13 @@ int main(void){
 			
 			//Scan2 with minimum 20mm upwards scan (safety)
 			// scan2_valid used as buffer to detect proper edge
+			//Go back down from bottom of scan
+			//coord2pulse(y,25,0,4000);
 			int scan2_valid = SCAN2BUFFER;
-			while(((scan2_valid > 0) && (flag == 0)) || (b<SCAN2MIN) ){
+			while( ((scan2_valid > 0) && (flag == 0)) || (b<SCAN2MIN) ){
 				y_ping = LgetCM(PINGCOUNT) * 10;
 				
-				scan2[b] = y_ping;
+				//scan2[b] = y_ping;
 				
 				if(y_ping > BORDER){
 					scan2Valid_reset = 0;
@@ -474,9 +476,18 @@ int main(void){
 				//y_pingR = RgetCM(PINGCOUNT) * 10;
 				//scan2R[b] = y_pingR;
 				
-				flag = coord2pulse(y,z++,0,1);
+				flag = coord2pulse(y,z++,0,SPEED);
 				b++;
 			}
+			
+			b = 0;
+			for(i=z;i>25;i--){
+				flag = coord2pulse(y,i,0,SPEED);
+				y_ping = LgetCM(PINGCOUNT) * 10;
+				scan2[b] = y_ping;
+				b++;
+			}
+			
 			//int b_size = b;
 			//report that exit was based on limit
 			if(flag==1){
