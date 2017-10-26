@@ -22,7 +22,7 @@
 #define SCAN3BUFFER 5
 #define BORDER 200
 #define STARTBASE 2100
-#define ENDPULSE 700
+#define ENDPULSE 1200
 #define STARTINGY 130
 #define STARTINGZ 50
 #define DIST2OBJ 70
@@ -30,8 +30,8 @@
 #define SCALEFACTOR 10000 //Scaling for training values to below 1
 #define SIZESEPERATOR 120 //Seperating value for big and small shapes
 #define SCAN2MIN 30 //Minimum scan before dyncamic buffer takes over to detect edge
-#define OBJECTSONPLANE 2
-#define SPEED 100
+#define OBJECTSONPLANE 3
+#define SPEED 1
 
 #define COEFFICIENTS 3
 
@@ -160,7 +160,7 @@ int main(void){
 	double scan2Filt[500];
 	
 	int a; //index for saving into scan1 array
-	//int a_size;
+	int scan1Min;
 	int b;
 	
 	//object struct array to hold objects
@@ -227,6 +227,7 @@ int main(void){
 			//scan1R[a] = right_ping;
 			printf("%d: %lf\n",a,scan1[a]);
 			a++;
+			scan1Min--;
 		}
 		
 		//These two if statements are used to look back at array in this iteration of loop to see if we have enough valid pings (4) to safely
@@ -238,6 +239,7 @@ int main(void){
 			printf("------------------Object Start @ m=%d------------------\n",m-(SCAN1BUFFER/2));
 			a = 0;
 			b = 0;
+			scan1Min = 20;
 			
 			//reset scan1 and scan2 arrays
 			for(i=0;i<500;i++){
@@ -259,6 +261,7 @@ int main(void){
 		// If object_started is 1 and there are less than 4 valid pings, this means you are no longer looking at object and must now mark
 		// object end. object_started is 0 and base pulse is saved in object_end.
 		if(left_valid<(SCAN1BUFFER/2) && object_started==1){
+		//if(left_valid<(SCAN1BUFFER/2) && object_started==1 && scan1Min < 1){
 		//if(left_valid<(SCAN1BUFFER/2) && right_valid<(SCAN1BUFFER/2) && object_started==1){
 			object_started = 0;
 			//int a_size = a;
@@ -333,7 +336,8 @@ int main(void){
 			//Actual filtering
 			scan1FiltMax = 0;
 			for(i=0;i<a;i++){
-				if( (scan1[i] < (mode + 50)) && (scan1[i] > (mode - 50)) ){
+				//if( (scan1[i] < (mode + 50)) && (scan1[i] > (mode - 50)) ){
+				if( scan1[i] < BORDER ){
 					scan1Filt[scan1FiltMax] = scan1[i];
 					scan1FiltMax++;
 				}
@@ -476,10 +480,11 @@ int main(void){
 				//y_pingR = RgetCM(PINGCOUNT) * 10;
 				//scan2R[b] = y_pingR;
 				
-				flag = coord2pulse(y,z++,0,SPEED);
+				flag = coord2pulse(y,z++,0,1);
 				b++;
 			}
 			
+			//Top down scan
 			b = 0;
 			for(i=z;i>25;i--){
 				flag = coord2pulse(y,i,0,SPEED);
@@ -547,7 +552,8 @@ int main(void){
 			//Actual filtering
 			scan2FiltMax = 0;
 			for(i=0;i<b;i++){
-				if( (scan2[i] < (side2_mode + 20)) && (scan2[i] > (side2_mode - 20)) ){
+				//if( (scan2[i] < (side2_mode + 20)) && (scan2[i] > (side2_mode - 20)) ){
+				if( scan2[i] < BORDER ){
 					scan2Filt[scan2FiltMax] = scan2[i];
 					scan2FiltMax++;
 				}
