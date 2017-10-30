@@ -21,17 +21,20 @@
 #define SCAN2BUFFER 5
 #define SCAN3BUFFER 5
 #define BORDER 200
-#define STARTBASE 2100
-#define ENDPULSE 1200
+#define STARTBASE 1800
+#define ENDPULSE 800
 #define STARTINGY 130
-#define STARTINGZ 50
+#define STARTINGZ 60
 #define DIST2OBJ 70
-#define BIGDELTA 1000
-#define SCALEFACTOR 10000 //Scaling for training values to below 1
+#define BIGDELTA 5000
+#define SCALE1FACTOR 100000 //Scaling for training values to below 1
+#define SCALE2FACTOR 1000000
 #define SIZESEPERATOR 120 //Seperating value for big and small shapes
 #define SCAN2MIN 30 //Minimum scan before dyncamic buffer takes over to detect edge
-#define OBJECTSONPLANE 3
+#define OBJECTSONPLANE 2
 #define SPEED 1
+#define SCAN1FILTRANGE 50
+#define SCAN2FILTRANGE 40
 
 #define COEFFICIENTS 3
 
@@ -336,8 +339,8 @@ int main(void){
 			//Actual filtering
 			scan1FiltMax = 0;
 			for(i=0;i<a;i++){
-				//if( (scan1[i] < (mode + 50)) && (scan1[i] > (mode - 50)) ){
-				if( scan1[i] < BORDER ){
+				if( (scan1[i] < (mode + 20)) && (scan1[i] > (mode - SCAN1FILTRANGE)) ){
+				//if( scan1[i] < BORDER ){
 					scan1Filt[scan1FiltMax] = scan1[i];
 					scan1FiltMax++;
 				}
@@ -398,7 +401,7 @@ int main(void){
 			
 			double scan1DeltaScaled[SIDE1INPUT];
 			for(i=0;i<SIDE1INPUT;i++){
-				scan1DeltaScaled[i] = scan1Delta[i] / SCALEFACTOR;
+				scan1DeltaScaled[i] = scan1Delta[i] / SCALE1FACTOR;
 			}
 			
 			writeTrainInput("Side1Net",scan1DeltaScaled,SIDE1INPUT);
@@ -552,8 +555,8 @@ int main(void){
 			//Actual filtering
 			scan2FiltMax = 0;
 			for(i=0;i<b;i++){
-				//if( (scan2[i] < (side2_mode + 20)) && (scan2[i] > (side2_mode - 20)) ){
-				if( scan2[i] < BORDER ){
+				if( (scan2[i] < (side2_mode + SCAN2FILTRANGE)) && (scan2[i] > (side2_mode - SCAN2FILTRANGE)) ){
+				//if( scan2[i] < BORDER ){
 					scan2Filt[scan2FiltMax] = scan2[i];
 					scan2FiltMax++;
 				}
@@ -589,7 +592,7 @@ int main(void){
 			
 			double scan2DeltaScaled[SIDE2INPUT];
 			for(i=0;i<SIDE2INPUT;i++){
-				scan2DeltaScaled[i] = scan2Delta[i] / SCALEFACTOR;
+				scan2DeltaScaled[i] = scan2Delta[i] / SCALE2FACTOR;
 			}
 			
 			writeRawScan("Scan2",scan2Filt,scan2FiltMax);
