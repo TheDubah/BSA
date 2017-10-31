@@ -21,8 +21,8 @@
 #define SCAN2BUFFER 5
 #define SCAN3BUFFER 5
 #define BORDER 200
-#define STARTBASE 1800
-#define ENDPULSE 800
+#define STARTBASE 1700
+#define ENDPULSE 1100
 #define STARTINGY 130
 #define STARTINGZ 60
 #define DIST2OBJ 70
@@ -160,6 +160,7 @@ int main(void){
 	//double scan2R[500];
 	
 	double scan1Filt[500];
+	double scan1Filt2[500];
 	double scan2Filt[500];
 	
 	int a; //index for saving into scan1 array
@@ -351,10 +352,31 @@ int main(void){
 			
 			writeRawScan("Scan1",scan1Filt,scan1FiltMax);
 			writeRawLog("Scan1_Log",scan1,a,side4Log);
-			writeRawLog("Scan1_Log",scan1Filt,scan1FiltMax,side4Log);
+			writeRawLog("Scan1_Log_Filt",scan1Filt,scan1FiltMax,side4Log);
 			
 			/*CURVE FITTING*/
 			regression(COEFFICIENTS, scan1Filt,scan1FiltMax,obj);
+			
+			double scan1Var;
+			for(i=0;i<scan1FiltMax;i++){
+				scan1Var = ((obj->coeff[0]) + ((obj->coeff[1])*pow(i,1)) + ((obj->coeff[2])*pow(i,2))) - scan1Filt[i];
+				if(scan1Var < 0){
+					scan1Var = -scan1Var;
+				}
+				
+				if((scan1Var > 10) && (i > 0)){
+					//scan1Filt2[i] = ((obj->coeff[0]) + ((obj->coeff[1])*pow(i,1)) + ((obj->coeff[2])*pow(i,2)));
+					scan1Filt2[i] = scan1Filt2[i-1];
+				}
+				else{
+					scan1Filt2[i] = scan1Filt[i];
+				}
+			}
+			
+			writeRawLog("Scan1_Log_Filt2",scan1Filt2,scan1FiltMax,side4Log);
+			
+			regression(COEFFICIENTS, scan1Filt2,scan1FiltMax,obj);
+			
 			
 			//print coefficients
 			printf("SIDE 1 COEFFICIENTS: ");
@@ -597,6 +619,7 @@ int main(void){
 			
 			writeRawScan("Scan2",scan2Filt,scan2FiltMax);
 			writeRawLog("Scan2_Log",scan2,b,side4Log);
+			writeRawLog("Scan2_Log_Filt",scan2Filt,scan2FiltMax,side4Log);
 			
 			writeTrainInput("Side2Net",scan2DeltaScaled,SIDE2INPUT);
 			//writeTrainInput("Side2NetSmall",scan2DeltaScaled,SIDE2INPUT);
