@@ -534,3 +534,33 @@ double * coord2pulse_XYZ(double base_pulse, double y, double z, int wrist_direct
 	
 	return xyz;
 }
+
+
+/*Relocation Code*/
+void reloc(int newx, int newy){
+// servo_command1(9, 1400, 9000);
+        int y = 130; // y = 130
+        int z = 25; // z = 25
+
+        coord2pulse(y,z,0,2000); //Default position
+
+        servo_command1(9, newx, 4000); // Going to the location to face the object
+
+        //coord2pulse(y,z,0,4000); //Default position
+        
+        coord2pulse(y,90,0,2000);//Going up to the opbject height
+      
+        coord2pulse(newy,75,-90,2000); //-90 to bend the gripper down and 230 moving forward
+        sleep(1);
+
+        coord2pulse(y, 200,-90,2000); //Go all the way up
+       
+        servo_command1(9, 2500, 2000);
+ 
+        coord2pulse(y, 60,-90,2000);  //
+        coord2pulse(y, 100,-90,2000); //
+        servo_command1(9, 1500, 2000);
+        coord2pulse(y, z,0,2000); //Default position again
+
+        //printf(" I am done!");
+}

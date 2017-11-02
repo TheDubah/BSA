@@ -21,17 +21,17 @@
 #define SCAN2BUFFER 5
 #define SCAN3BUFFER 5
 #define BORDER 200
-#define STARTBASE 1700
-#define ENDPULSE 1100
+#define STARTBASE 2100
+#define ENDPULSE 1600
 #define STARTINGY 130
 #define STARTINGZ 60
-#define DIST2OBJ 70
+#define DIST2OBJ 100
 #define BIGDELTA 5000
 #define SCALE1FACTOR 100000 //Scaling for training values to below 1
 #define SCALE2FACTOR 1000000
 #define SIZESEPERATOR 120 //Seperating value for big and small shapes
 #define SCAN2MIN 30 //Minimum scan before dyncamic buffer takes over to detect edge
-#define OBJECTSONPLANE 2
+#define OBJECTSONPLANE 3
 #define SPEED 1
 #define SCAN1FILTRANGE 50
 #define SCAN2FILTRANGE 40
@@ -51,47 +51,37 @@ int main(void){
 	/*User Input*/
 	//Ask user what object they want to grab
 	int i;
-	/*int invalidInput = 1;
-	const char cubeStr[20] = "CUBE";
-	const char cylStr[20] = "CYLINDER";
-	const char sphStr[20] = "SPHERE";
+	int invalidInput = 1;
+	int userLabelID;
 	
 	while(invalidInput){
-		char userInput[20];
+		char userInput;
 		printf("Please enter shape to grab:\n");
-		fgets(userInput, 20, stdin);
+		printf("1: Cube\n");
+		printf("2: Cylinder\n");
+		printf("3: Sphere\n");
+		userInput = getchar();
 		
-		//Standardize to uppercase
-		for(i=0;i<20;i++){
-			userInput[i] = toupper(userInput[i]);
-		}
 	
 
 		//Obtain labelID from input
-		int userLabelID;
-		if(strcmp(userInput,cubeStr) == 0){
+		if(userInput == '1'){
 			userLabelID = 0;
 			invalidInput = 0;
 		}
-		else if(strcmp(userInput,cylStr) == 0){
+		else if(userInput == '2'){
 			userLabelID = 1;
 			invalidInput = 0;
 		}
-		else if(strcmp(userInput,sphStr) == 0){
+		else if(userInput == '3'){
 			userLabelID = 2;
 			invalidInput = 0;
 		}
-		else if(strcmp(userInput,cubeStr) < 0){
-			printf("input less than CUBE\n");
-		}
-		else if(strcmp(userInput,cubeStr) > 0){
-			printf("input less than CUBE\n");
-		}
 		else{
-			printf("Invalid input\n");
+			printf("Invalid input!!\n");
+			printf("------------------\n\n");
 		}
 	}
-	return 1;*/
 	
 	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
 	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
@@ -160,7 +150,6 @@ int main(void){
 	//double scan2R[500];
 	
 	double scan1Filt[500];
-	double scan1Filt2[500];
 	double scan2Filt[500];
 	
 	int a; //index for saving into scan1 array
@@ -357,6 +346,7 @@ int main(void){
 			/*CURVE FITTING*/
 			regression(COEFFICIENTS, scan1Filt,scan1FiltMax,obj);
 			
+			/*
 			double scan1Var;
 			for(i=0;i<scan1FiltMax;i++){
 				scan1Var = ((obj->coeff[0]) + ((obj->coeff[1])*pow(i,1)) + ((obj->coeff[2])*pow(i,2))) - scan1Filt[i];
@@ -376,7 +366,7 @@ int main(void){
 			writeRawLog("Scan1_Log_Filt2",scan1Filt2,scan1FiltMax,side4Log);
 			
 			regression(COEFFICIENTS, scan1Filt2,scan1FiltMax,obj);
-			
+			*/
 			
 			//print coefficients
 			printf("SIDE 1 COEFFICIENTS: ");
@@ -416,7 +406,7 @@ int main(void){
 			for(i=deltaStart;i<deltaStart+BIGDELTA;i=i+trueDelta){
 				//delta = [i+delta] - [i]
 				//scan1Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
-				scan1Delta[deltaIndex] = ((obj -> coeff[2])*pow(i+trueDelta,2)) - ((obj -> coeff[2])*pow(i,2));
+				scan1Delta[deltaIndex] = fabs( ((obj -> coeff[2])*pow(i+trueDelta,2)) - ((obj -> coeff[2])*pow(i,2)));
 				printf("Delta: %lf\n", scan1Delta[deltaIndex]);
 				deltaIndex++;
 			}
@@ -464,6 +454,9 @@ int main(void){
 				y++;
 				coord2pulse(y,z,0,1);
 			}
+			
+			//Save distance to object for relocation code
+			obj -> dist2obj = DIST2OBJ + y;
 			
 			//int flag = 0;
 			int flag;
@@ -589,6 +582,16 @@ int main(void){
 				printf("FILTERED: %lf\n",scan2Filt[i]);
 			}
 			
+			/*
+			int scan2ChopMax = scan2FiltMax-20;
+			double scan2Chop[scan2ChopMax];
+			int chopInd = 0;
+			for(i=10;i<scan2FiltMax-10;i++){
+				scan2Chop[chopInd] = scan2Filt[i];
+				chopInd++;
+			}
+			
+			regression(COEFFICIENTS, scan2Chop,chopInd,obj);*/
 			regression(COEFFICIENTS, scan2Filt,scan2FiltMax,obj);
 			
 			//print coefficients
@@ -607,7 +610,7 @@ int main(void){
 			//for(i=1;i<vertStart+101;i++){
 			for(i=deltaStart;i<deltaStart+BIGDELTA;i=i+trueDelta){
 				//scan2Delta[deltaIndex] = (((obj -> coeff[2])*pow(i+trueDelta,2)) + ((obj -> coeff[1])*pow(i+trueDelta,1)) + (obj -> coeff[0])) - (((obj -> coeff[2])*pow(i,2)) + ((obj -> coeff[1])*pow(i,1)) + (obj -> coeff[0]));
-				scan2Delta[deltaIndex] = ((obj -> coeff[2])*pow(i+trueDelta,2)) - ((obj -> coeff[2])*pow(i,2));
+				scan2Delta[deltaIndex] = fabs( ((obj -> coeff[2])*pow(i+trueDelta,2)) - ((obj -> coeff[2])*pow(i,2)));
 				printf("Delta: %lf\n", scan2Delta[deltaIndex]);
 				deltaIndex++;
 			}
@@ -694,6 +697,10 @@ int main(void){
 			printf("SmallCylinder: %lf\n",obj -> shapeNet_result[4]);
 			printf("SmallSphere: %lf\n",obj -> shapeNet_result[5]);
 			
+			printf("DISTANCE TO OBJ: %d\n",obj->dist2obj);
+			printf("MIDPOINT: %d\n",obj->mid_point);
+			
+			
 			//assign obj to objects array
 			objects[curr_objInd] = obj;
 			curr_objInd++;
@@ -706,14 +713,14 @@ int main(void){
 			y = STARTINGY;
 			z = STARTINGZ;
 			coord2pulse(y,z,0,2000);
-			servo_command1(BASE_CH,m,2000);
+			servo_command1(BASE_CH,m-10,2000);
 			//return 0;
 		}		
 	}
 
 	/*Object Matching*/
 	//Loop through scanned and identified objects and see if they match what the user requested
-	for(m=0;m<OBJECTSONPLANE;m++){
+	for(m=0;m<curr_objInd;m++){
 		//printf("Obj[%d]: %d\n",m,objects[m] -> metaLabel);
 		
 		if(objects[m] -> metaLabel == 0){
@@ -752,7 +759,11 @@ int main(void){
 	}
 	
 	/*Object Relocation*/
-	
+	for(i=0;i<curr_objInd;i++){
+		if(objects[i]->metaLabel == userLabelID){
+			reloc(objects[i]->mid_point,objects[i]->dist2obj);
+		}
+	}
 	
 	
 	
