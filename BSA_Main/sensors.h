@@ -12,7 +12,7 @@
 #define TRIG 18
 #define ECHOL 23
 #define ECHOR 24
-#define MAGN 4
+#define MAGN 17
  
 void setup() {
 	export(TRIG);

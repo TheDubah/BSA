@@ -7,6 +7,7 @@
 //Main object struct that holds any vital information about an object
 typedef struct object {
 	int mid_point;
+	int side2_midpoint;
 	int dist2obj;
 	double side1Net_result[SIDE1OUTPUT];
 	double side2Net_result[SIDE2OUTPUT];

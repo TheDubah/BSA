@@ -65,11 +65,13 @@ int relocate (int mid_point){
 int main(void){
 	
 	setup();
+	
 	setvalue(MAGN, 1);
-	setvalue(MAGN, 1);
-	while(1);
+	//setvalue(MAGN, 1);
+	//while(1);
 	//int mid_point = 1500;
 	//relocate(mid_point);
+	
 	return 1;
 	
 		

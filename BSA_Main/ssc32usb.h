@@ -539,7 +539,10 @@ double * coord2pulse_XYZ(double base_pulse, double y, double z, int wrist_direct
 /*Relocation Code*/
 void reloc(int newx, int newy){
 // servo_command1(9, 1400, 9000);
-        int y = 130; // y = 130
+		//Turn on magnet
+		setvalue(MAGN, 1);
+        
+		int y = 130; // y = 130
         int z = 25; // z = 25
 
         coord2pulse(y,z,0,2000); //Default position
@@ -550,7 +553,7 @@ void reloc(int newx, int newy){
         
         coord2pulse(y,90,0,2000);//Going up to the opbject height
       
-        coord2pulse(newy,75,-90,2000); //-90 to bend the gripper down and 230 moving forward
+        coord2pulse(newy-10,75,-90,2000); //-90 to bend the gripper down and 230 moving forward
         sleep(1);
 
         coord2pulse(y, 200,-90,2000); //Go all the way up
@@ -558,6 +561,10 @@ void reloc(int newx, int newy){
         servo_command1(9, 2500, 2000);
  
         coord2pulse(y, 60,-90,2000);  //
+		
+		//Turn off magnet
+		setvalue(MAGN, 0);
+		
         coord2pulse(y, 100,-90,2000); //
         servo_command1(9, 1500, 2000);
         coord2pulse(y, z,0,2000); //Default position again
