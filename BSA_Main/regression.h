@@ -9,6 +9,7 @@ typedef struct object {
 	int mid_point;
 	int side2_midpoint;
 	int dist2obj;
+	int objheight;
 	double side1Net_result[SIDE1OUTPUT];
 	double side2Net_result[SIDE2OUTPUT];
 	double shapeNet_result[SHAPEOUTPUT];

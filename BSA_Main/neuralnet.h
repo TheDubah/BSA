@@ -14,10 +14,6 @@
 #define SIDE2HIDDEN 500
 #define SIDE2OUTPUT 2
 
-#define SIDE3INPUT 20
-#define SIDE3HIDDEN 12
-#define SIDE3OUTPUT 2
-
 #define SHAPEINPUT 8
 #define SHAPEHIDDEN 500
 #define SHAPEOUTPUT 6
@@ -1214,109 +1210,6 @@ double *computeSide2(char *networkID, double *input){
 	/*ASSIGN TO POINTER TO RETURN*/
 	static double result[SIDE2OUTPUT];
 	for(i=0;i<SIDE2OUTPUT;i++){
-		result[i] = final_output[i][0];
-	}
-	
-	return result;
-}
-
-
-double *computeSide3(char *networkID, double *input){
-	/*LOAD WEIGHTS FROM FILE*/
-	FILE *wihFile,*whoFile;
-	double w_ih[SIDE3HIDDEN][SIDE3INPUT];
-	double w_ho[SIDE3OUTPUT][SIDE3HIDDEN];
-	
-	char inputFileName[50] = "Weights/wih_";
-	strcat(inputFileName,networkID);
-	strcat(inputFileName,".txt");
-	
-	wihFile = fopen(inputFileName,"r");
-	if(wihFile == NULL){
-		fprintf(stderr, "Error opening WIH file\n");
-		return NULL;
-	}
-	
-	int i,j,k;
-	for(i=0;i<SIDE3HIDDEN;i++){
-		for(j=0;j<SIDE3INPUT;j++){
-			//load value for wih.txt
-			fscanf(wihFile,"%lf",&w_ih[i][j]);
-		}
-	}
-	
-	fclose(wihFile);
-	
-	char outputFileName[50] = "Weights/who_";
-	strcat(outputFileName,networkID);
-	strcat(outputFileName,".txt");
-	
-	whoFile = fopen(outputFileName,"r");
-	if(whoFile == NULL){
-		fprintf(stderr, "Error opening WHO file\n");
-		return NULL;
-	}
-	
-	for(i=0;i<SIDE3OUTPUT;i++){
-		for(j=0;j<SIDE3HIDDEN;j++){
-			//load value for who.txt
-			fscanf(whoFile,"%lf",&w_ho[i][j]);
-		}
-	}
-	
-	fclose(whoFile);
-	
-	
-	/*TURN INPUTS INTO 2D ARRAY*/
-	double inputs[SIDE3INPUT][1];
-	
-	for(i=0;i<SIDE3INPUT;i++){
-		inputs[i][0] = input[i];
-	}
-	
-	/*COMPUTE HIDDEN INPUTS WITH WEIGHTS (DOT PRODUCT)*/
-	double hidden_inputs[SIDE3HIDDEN][1];
-	double dotsum;
-	
-	for(i=0;i<SIDE3HIDDEN;i++){
-		dotsum = 0.0;
-		for(k=0;k<SIDE3INPUT;k++){
-			dotsum += w_ih[i][k] * inputs[k][0];
-		}
-		hidden_inputs[i][0] = dotsum;
-	}
-	
-
-	/*COMPUTE HIDDEN OUTPUT WITH ACTIVATION FUNC (SIGMOID)*/
-	double hidden_output[SIDE3HIDDEN][1];
-	
-	for(i=0;i<SIDE3HIDDEN;i++){
-		hidden_output[i][0] = sigmoid(hidden_inputs[i][0]);
-	}
-	
-	
-	/*COMPUTE HIDDEN OUTPUTS WITH WEIGHTS (DOT PRODUCT)*/
-	double output_in[SIDE3OUTPUT][1];
-	
-	for(i=0;i<SIDE3OUTPUT;i++){
-		dotsum = 0.0;
-		for(k=0;k<SIDE3HIDDEN;k++){
-			dotsum += w_ho[i][k] * hidden_output[k][0];
-		}
-		output_in[i][0] = dotsum;
-	}
-	
-	
-	/*COMPUTE FINAL OUTPUT WITH ACTIVATION FUNC*/
-	double final_output[SIDE3OUTPUT][1];
-	
-	for(i=0;i<SIDE3OUTPUT;i++){
-		final_output[i][0] = sigmoid(output_in[i][0]);
-	}
-	
-	/*ASSIGN TO POINTER TO RETURN*/
-	static double result[SIDE3OUTPUT];
-	for(i=0;i<SIDE3OUTPUT;i++){
 		result[i] = final_output[i][0];
 	}
 	

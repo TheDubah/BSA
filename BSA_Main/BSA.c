@@ -35,6 +35,7 @@
 #define SPEED 1
 #define SCAN1FILTRANGE 50
 #define SCAN2FILTRANGE 40
+#define RELOCTIME 2000
 
 #define COEFFICIENTS 3
 
@@ -44,6 +45,9 @@
 #define SEED 900
 
 
+//Function declaration used within main but defined below
+void relocate (int mid_point, int y, int z);
+void train_all(void);
 
 //main program/operation flow
 int main(void){
@@ -56,12 +60,12 @@ int main(void){
 	
 	while(invalidInput){
 		char userInput;
-		printf("Please enter shape to grab:\n");
+		printf("Please enter shape to grab or select training:\n");
 		printf("1: Cube\n");
 		printf("2: Cylinder\n");
 		printf("3: Sphere\n");
+		printf("4: Training\n");
 		userInput = getchar();
-		
 	
 
 		//Obtain labelID from input
@@ -77,41 +81,15 @@ int main(void){
 			userLabelID = 2;
 			invalidInput = 0;
 		}
+		else if(userInput == '4'){
+			train_all();
+			return 1;
+		}
 		else{
 			printf("Invalid input!!\n");
 			printf("------------------\n\n");
 		}
 	}
-	
-	//newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	//newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	//newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	//newNet("Side1NetSmall",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	//newNet("Side2NetSmall",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-
-	//fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	//fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	//fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	//fullTrain("Side1NetSmall",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	//fullTrain("Side2NetSmall",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
-	//return 1;
-
-	/*double input1[9] = {1.0, 0.01, 0.01, 1.0, 0.01, 0.01, 1.0, 0.01, 0.01};
-	double input2[9] = {0.01, 1.00, 0.01, 1.00, 0.01, 0.01, 1.00, 0.01, 0.01};
-	
-	double *result1,*result2;
-	result1 = computeShape("ShapeNet",input1);
-	result2 = computeShape("ShapeNet",input2);
-	int l;
-	for(l=0;l<SHAPEOUTPUT;l++){
-		printf("%d: %lf\n",l,result1[l]);
-	}
-	
-	for(l=0;l<SHAPEOUTPUT;l++){
-		printf("%d: %lf\n",l,result2[l]);
-	}
-	
-	return 1;*/
 	
 	//For sensors setup
 	setup();
@@ -335,6 +313,9 @@ int main(void){
 			//Get scan2 midpoint
 			obj -> side2_midpoint = 25 + ((z-25)/2);
 			
+			//Save height for object
+			obj -> objheight = z;
+			
 			
 			//Top down scan
 			b = 0;
@@ -467,14 +448,13 @@ int main(void){
 			
 			double *result2;
 			//BIG SHAPE
-			//if(a_size > SIZESEPERATOR){
-				result2 = computeSide2("Side2Net",scan2DeltaScaled);
-				for(i=0;i<SIDE2OUTPUT;i++){
-					obj -> side2Net_result[i] = result2[i];
-					//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
-				}
-				printf("Side2Big FLAT: %lf\n",result2[0]);
-				printf("Side2Big CURVE: %lf\n\n",result2[1]);
+			result2 = computeSide2("Side2Net",scan2DeltaScaled);
+			for(i=0;i<SIDE2OUTPUT;i++){
+				obj -> side2Net_result[i] = result2[i];
+				//printf("sideNet2[%d]: %lf\n",i,obj -> side2Net_result[i]);
+			}
+			printf("Side2Big FLAT: %lf\n",result2[0]);
+			printf("Side2Big CURVE: %lf\n\n",result2[1]);
 			
 			
 			//printf("\nPlease enter side for logs \n");
@@ -487,13 +467,13 @@ int main(void){
 			if((obj -> side2Net_result[0]) > (obj -> side2Net_result[1])){
 				//Side2 was flat
 				printf("ID: %d\n",userLabelID);
-				if((userLabelID == 0) || (userLabelID == 2)){
+				if((userLabelID == 0) || (userLabelID == 1)){
 					side1Proceed = 1;
 				}
 			}
 			else{
 				//Side2 was curve
-				if(userLabelID == 1){
+				if(userLabelID == 2){
 					side1Proceed = 1;
 				}
 			}
@@ -784,7 +764,7 @@ int main(void){
 				//Object matches user selection
 				if(userLabelID == object_detectedInd){
 					//Relocate object that was found
-					reloc(obj->mid_point,obj->dist2obj);
+					relocate(obj->mid_point,obj->dist2obj,obj->objheight);
 					//Free obj before leaving
 					free(obj);
 					break;
@@ -862,3 +842,67 @@ int main(void){
 	
 	return 1;
 }//End main
+
+
+void relocate (int mid_point, int y, int z){
+	servo_command1(BASE_CH,mid_point,3000);
+	coord2pulse(STARTINGY,STARTINGZ,0,3000);
+	servo_command1(CLAW_CH,1,3000);
+	
+		
+	if (mid_point >= 1500 ){
+		
+		coord2pulse(STARTINGY,z-50,0,RELOCTIME); //
+		setvalue(MAGN, 1);	
+		coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
+		
+		coord2pulse(y-5,z-38,-90,RELOCTIME);
+		coord2pulse(y-5,z-48,-90,RELOCTIME);
+		coord2pulse(y-100,z+50,-90,RELOCTIME);
+		//coord2pulse(130,195,-90,RELOCTIME);
+
+	 	servo_command1(BASE_CH,2500,RELOCTIME);
+
+		coord2pulse(120,20,-90,RELOCTIME);
+		setvalue(MAGN, 0);
+		coord2pulse(120,150,-90,RELOCTIME); 
+		servo_command1(BASE_CH,mid_point,RELOCTIME);
+		coord2pulse(STARTINGY,STARTINGZ,0,RELOCTIME);
+
+	}
+	
+	
+	if (mid_point < 1500 ){
+		coord2pulse(STARTINGY,z-50,0,RELOCTIME); //
+		setvalue(MAGN, 1);	
+		coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
+		
+		coord2pulse(y-5,z-38,-90,RELOCTIME);
+		coord2pulse(y-5,z-48,-90,RELOCTIME);
+		coord2pulse(y-100,z+50,-90,RELOCTIME);
+		//coord2pulse(130,195,-90,2000);
+
+	 	servo_command1(BASE_CH,200,RELOCTIME);
+
+		coord2pulse(120,20,-90,RELOCTIME);
+		setvalue(MAGN, 0);
+		coord2pulse(120,150,-90,RELOCTIME); 
+		servo_command1(BASE_CH,mid_point,RELOCTIME);
+		coord2pulse(STARTINGY,STARTINGZ,0,RELOCTIME);
+
+	}
+	
+	return;
+}
+
+//Option to train all network
+void train_all(void){
+	newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+	newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+
+	fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+	fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+	return;
+}
