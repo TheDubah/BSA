@@ -21,7 +21,7 @@
 #define SCAN2BUFFER 5
 #define SCAN3BUFFER 5
 #define BORDER 200
-#define STARTBASE 1700
+#define STARTBASE 1800
 #define ENDPULSE 1100
 #define STARTINGY 130
 #define STARTINGZ 60
@@ -47,7 +47,7 @@
 
 //Function declaration used within main but defined below
 void relocate (int mid_point, int y, int z);
-void train_all(void);
+void train_all(char selection);
 
 //main program/operation flow
 int main(void){
@@ -56,10 +56,13 @@ int main(void){
 	//Ask user what object they want to grab
 	int i;
 	int invalidInput = 1;
+	int invalidInput2 = 1;
 	int userLabelID;
 	
+	char userInput2;
+	char userInput;
+	
 	while(invalidInput){
-		char userInput;
 		printf("Please enter shape to grab or select training:\n");
 		printf("1: Cube\n");
 		printf("2: Cylinder\n");
@@ -82,8 +85,33 @@ int main(void){
 			invalidInput = 0;
 		}
 		else if(userInput == '4'){
-			train_all();
-			return 1;
+			invalidInput2 = 1;
+			while(invalidInput2){
+				printf("Select which network to train:\n");
+				printf("1: Side 1 Network\n");
+				printf("2: Side 2 Network\n");
+				printf("3: Shape Network\n");
+				printf("4: All Networks\n");
+				printf("5: Main Menu\n");
+				userInput2 = getchar();
+				
+				if((userInput2 == '1') || (userInput2 == '2') || (userInput2 == '3') || (userInput2 == '4')){
+					invalidInput2 = 0;
+					train_all(userInput2);
+					return 1;
+				}
+				
+				else if(userInput2 == '5'){
+					//Exit menu 2
+					invalidInput2 = 0;
+				}
+				
+				else{
+					//Repeat menu 2
+					printf("Invalid input!!\n");
+					printf("------------------\n\n");
+				}
+			}
 		}
 		else{
 			printf("Invalid input!!\n");
@@ -319,7 +347,7 @@ int main(void){
 			
 			//Top down scan
 			b = 0;
-			for(i=z;i>25;i--){
+			for(i=z;i>obj -> side2_midpoint;i--){
 				flag = coord2pulse(y,i,0,SPEED);
 				y_ping = LgetCM(PINGCOUNT) * 10;
 				scan2[b] = y_ping;
@@ -851,14 +879,23 @@ void relocate (int mid_point, int y, int z){
 	
 		
 	if (mid_point >= 1500 ){
+		coord2pulse(STARTINGY,z,0,RELOCTIME); 
+		setvalue(MAGN, 1);	
+		coord2pulse(STARTINGY,z,-90,RELOCTIME);
 		
-		coord2pulse(STARTINGY,z-50,0,RELOCTIME); //
+		coord2pulse(y-5,z,-90,RELOCTIME);
+		coord2pulse(y-5,z,-90,RELOCTIME);
+		coord2pulse(y-100,z,-90,RELOCTIME);
+		coord2pulse(y-100,z-10,-90,RELOCTIME);
+		coord2pulse(y-100,z+50,-90,RELOCTIME);
+		
+		/*coord2pulse(STARTINGY,z-50,0,RELOCTIME); 
 		setvalue(MAGN, 1);	
 		coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
 		
 		coord2pulse(y-5,z-38,-90,RELOCTIME);
 		coord2pulse(y-5,z-48,-90,RELOCTIME);
-		coord2pulse(y-100,z+50,-90,RELOCTIME);
+		coord2pulse(y-100,z+50,-90,RELOCTIME);*/
 		//coord2pulse(130,195,-90,RELOCTIME);
 
 	 	servo_command1(BASE_CH,2500,RELOCTIME);
@@ -873,13 +910,23 @@ void relocate (int mid_point, int y, int z){
 	
 	
 	if (mid_point < 1500 ){
-		coord2pulse(STARTINGY,z-50,0,RELOCTIME); //
+		coord2pulse(STARTINGY,z,0,RELOCTIME);
+		setvalue(MAGN, 1);	
+		coord2pulse(STARTINGY,z,-90,RELOCTIME);
+		
+		coord2pulse(y-5,z,-90,RELOCTIME);
+		coord2pulse(y-5,z,-90,RELOCTIME);
+		coord2pulse(y-100,z,-90,RELOCTIME);
+		coord2pulse(y-100,z-10,-90,RELOCTIME);
+		coord2pulse(y-100,z+50,-90,RELOCTIME);
+		
+		/*coord2pulse(STARTINGY,z-50,0,RELOCTIME);
 		setvalue(MAGN, 1);	
 		coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
 		
 		coord2pulse(y-5,z-38,-90,RELOCTIME);
 		coord2pulse(y-5,z-48,-90,RELOCTIME);
-		coord2pulse(y-100,z+50,-90,RELOCTIME);
+		coord2pulse(y-100,z+50,-90,RELOCTIME);*/
 		//coord2pulse(130,195,-90,2000);
 
 	 	servo_command1(BASE_CH,200,RELOCTIME);
@@ -896,13 +943,34 @@ void relocate (int mid_point, int y, int z){
 }
 
 //Option to train all network
-void train_all(void){
-	newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+void train_all(char selection){
+	//Side 1 Train
+	if(selection == '1'){
+		newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+		fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+	}
+	//Side 2 Train
+	else if(selection == '2'){
+		newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+		fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+	}
+	
+	//Shape Train
+	else if(selection == '3'){
+		newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+		fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+	}
+	
+	//Train all
+	else if(selection == '4'){
+		newNet("Side1Net",SEED,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+		newNet("Side2Net",SEED,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+		newNet("ShapeNet",SEED,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+		
+		fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
+		fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
+		fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
+	}
 
-	fullTrain("ShapeNet",1,5,SHAPEINPUT,SHAPEHIDDEN,SHAPEOUTPUT);
-	fullTrain("Side1Net",1,10,SIDE1INPUT,SIDE1HIDDEN,SIDE1OUTPUT);
-	fullTrain("Side2Net",1,10,SIDE2INPUT,SIDE2HIDDEN,SIDE2OUTPUT);
 	return;
 }

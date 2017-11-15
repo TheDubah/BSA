@@ -14,9 +14,9 @@
 #define SIDE2HIDDEN 500
 #define SIDE2OUTPUT 2
 
-#define SHAPEINPUT 8
+#define SHAPEINPUT 4
 #define SHAPEHIDDEN 500
-#define SHAPEOUTPUT 6
+#define SHAPEOUTPUT 3
 
 
 /*These variables are part of all function parameters and are no longer MACROS in this file:
