@@ -71,12 +71,12 @@ int relocate (int mid_point, int y, int z){
 int main(void){
 	
 	setup();
-	setvalue(MAGN, 0);	
+	setvalue(MAGN, 1);	
 	//setvalue(MAGN, 1);
-	int mid_point = 1100;
-	int y = 222;
-	int z = 90;
-	relocate(mid_point,y,z);
+	//int mid_point = 1100;
+	//int y = 222;
+	//int z = 90;
+	//relocate(mid_point,y,z);
 	
 	return 1;
 	

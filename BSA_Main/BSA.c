@@ -17,15 +17,15 @@
 #include "regression.h" //-> Used for polynomial regression
 
 #define PINGCOUNT 1
-#define SCAN1BUFFER 10
+#define SCAN1BUFFER 14
 #define SCAN2BUFFER 5
 #define SCAN3BUFFER 5
 #define BORDER 200
-#define STARTBASE 1800
-#define ENDPULSE 1100
+#define STARTBASE 2150
+#define ENDPULSE 700
 #define STARTINGY 130
-#define STARTINGZ 60
-#define DIST2OBJ 100
+#define STARTINGZ 70
+#define DIST2OBJ 70
 #define BIGDELTA 5000
 #define SCALE1FACTOR 100000 //Scaling for training values to below 1
 #define SCALE2FACTOR 1000000
@@ -35,7 +35,7 @@
 #define SPEED 1
 #define SCAN1FILTRANGE 50
 #define SCAN2FILTRANGE 40
-#define RELOCTIME 2000
+#define RELOCTIME 1000
 
 #define COEFFICIENTS 3
 
@@ -51,6 +51,15 @@ void train_all(char selection);
 
 //main program/operation flow
 int main(void){
+	
+	//For sensors setup
+	setup();
+	
+	//Gripper holds magnet
+	servo_command1(CLAW_CH,1280,RELOCTIME);
+	
+	setvalue(MAGN, 1);
+	
 	
 	/*User Input*/
 	//Ask user what object they want to grab
@@ -68,8 +77,9 @@ int main(void){
 		printf("2: Cylinder\n");
 		printf("3: Sphere\n");
 		printf("4: Training\n");
-		userInput = getchar();
-	
+		
+		fflush(stdout);
+		userInput = getchar();		
 
 		//Obtain labelID from input
 		if(userInput == '1'){
@@ -93,6 +103,8 @@ int main(void){
 				printf("3: Shape Network\n");
 				printf("4: All Networks\n");
 				printf("5: Main Menu\n");
+				
+				fflush(stdout);
 				userInput2 = getchar();
 				
 				if((userInput2 == '1') || (userInput2 == '2') || (userInput2 == '3') || (userInput2 == '4')){
@@ -108,19 +120,19 @@ int main(void){
 				
 				else{
 					//Repeat menu 2
+					printf("userInput2 was: %c\n",userInput2);
 					printf("Invalid input!!\n");
 					printf("------------------\n\n");
 				}
 			}
 		}
 		else{
+			printf("userInput was: %c\n",userInput);
 			printf("Invalid input!!\n");
 			printf("------------------\n\n");
 		}
 	}
 	
-	//For sensors setup
-	setup();
 	
 	//Starting y-z position (can be changed)
 	int y = STARTINGY;
@@ -234,7 +246,7 @@ int main(void){
 		//if(left_valid>=(SCAN1BUFFER/2) && right_valid>=(SCAN1BUFFER/2) && object_started==0){	
 			object_started = 1;
 			object_start = m-(SCAN1BUFFER/2);
-			printf("------------------Object Start @ m=%d------------------\n",m-(SCAN1BUFFER/2));
+			printf("------------------Object Start @ m=%d------------------\n",m-(SCAN1BUFFER));
 			a = 0;
 			b = 0;
 			
@@ -347,7 +359,7 @@ int main(void){
 			
 			//Top down scan
 			b = 0;
-			for(i=z;i>obj -> side2_midpoint;i--){
+			for(i=z;i>(obj -> side2_midpoint)/2;i--){
 				flag = coord2pulse(y,i,0,SPEED);
 				y_ping = LgetCM(PINGCOUNT) * 10;
 				scan2[b] = y_ping;
@@ -732,14 +744,10 @@ int main(void){
 				double shapeInput[SHAPEINPUT];
 				//BIG SHAPE
 				//if(a_size > SIZESEPERATOR){
-					shapeInput[0] = obj -> side1Net_result[0];
-					shapeInput[1] = obj -> side1Net_result[1];
-					shapeInput[2] = obj -> side2Net_result[0];
-					shapeInput[3] = obj -> side2Net_result[1];
-					shapeInput[4] = 0.001;
-					shapeInput[5] = 0.001;
-					shapeInput[6] = 0.001;
-					shapeInput[7] = 0.001;
+				shapeInput[0] = obj -> side1Net_result[0];
+				shapeInput[1] = obj -> side1Net_result[1];
+				shapeInput[2] = obj -> side2Net_result[0];
+				shapeInput[3] = obj -> side2Net_result[1];
 				//}
 				//SMALL SHAPE
 				/*else{
@@ -771,9 +779,9 @@ int main(void){
 				printf("BigCube: %lf\n",obj -> shapeNet_result[0]);
 				printf("BigCylinder: %lf\n",obj -> shapeNet_result[1]);
 				printf("BigSphere: %lf\n",obj -> shapeNet_result[2]);
-				printf("SmallCube: %lf\n",obj -> shapeNet_result[3]);
-				printf("SmallCylinder: %lf\n",obj -> shapeNet_result[4]);
-				printf("SmallSphere: %lf\n",obj -> shapeNet_result[5]);
+				//printf("SmallCube: %lf\n",obj -> shapeNet_result[3]);
+				//printf("SmallCylinder: %lf\n",obj -> shapeNet_result[4]);
+				//printf("SmallSphere: %lf\n",obj -> shapeNet_result[5]);
 				
 				printf("DISTANCE TO OBJ: %d\n",obj->dist2obj);
 				printf("MIDPOINT: %d\n",obj->mid_point);
@@ -795,7 +803,7 @@ int main(void){
 					relocate(obj->mid_point,obj->dist2obj,obj->objheight);
 					//Free obj before leaving
 					free(obj);
-					break;
+					return 1;
 				}
 			}
 			
@@ -873,29 +881,24 @@ int main(void){
 
 
 void relocate (int mid_point, int y, int z){
-	servo_command1(BASE_CH,mid_point,3000);
-	coord2pulse(STARTINGY,STARTINGZ,0,3000);
-	servo_command1(CLAW_CH,1,3000);
+	servo_command1(BASE_CH,mid_point,RELOCTIME);
+	coord2pulse(STARTINGY,STARTINGZ,0,RELOCTIME);
 	
 		
 	if (mid_point >= 1500 ){
-		coord2pulse(STARTINGY,z,0,RELOCTIME); 
+		//coord2pulse(STARTINGY,z,0,RELOCTIME); 
+		//setvalue(MAGN, 1);	
+		//coord2pulse(STARTINGY,z,-90,RELOCTIME);
+		
+		
+		//coord2pulse(STARTINGY,z-50,0,RELOCTIME); 
 		setvalue(MAGN, 1);	
+		//coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
 		coord2pulse(STARTINGY,z,-90,RELOCTIME);
 		
 		coord2pulse(y-5,z,-90,RELOCTIME);
-		coord2pulse(y-5,z,-90,RELOCTIME);
-		coord2pulse(y-100,z,-90,RELOCTIME);
-		coord2pulse(y-100,z-10,-90,RELOCTIME);
+		coord2pulse(y-5,z-28,-90,RELOCTIME);
 		coord2pulse(y-100,z+50,-90,RELOCTIME);
-		
-		/*coord2pulse(STARTINGY,z-50,0,RELOCTIME); 
-		setvalue(MAGN, 1);	
-		coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
-		
-		coord2pulse(y-5,z-38,-90,RELOCTIME);
-		coord2pulse(y-5,z-48,-90,RELOCTIME);
-		coord2pulse(y-100,z+50,-90,RELOCTIME);*/
 		//coord2pulse(130,195,-90,RELOCTIME);
 
 	 	servo_command1(BASE_CH,2500,RELOCTIME);
@@ -910,23 +913,18 @@ void relocate (int mid_point, int y, int z){
 	
 	
 	if (mid_point < 1500 ){
-		coord2pulse(STARTINGY,z,0,RELOCTIME);
+		//coord2pulse(STARTINGY,z,0,RELOCTIME);
+		//setvalue(MAGN, 1);	
+		//coord2pulse(STARTINGY,z,-90,RELOCTIME);
+		
+		//coord2pulse(STARTINGY,z-50,0,RELOCTIME);
 		setvalue(MAGN, 1);	
+		//coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
 		coord2pulse(STARTINGY,z,-90,RELOCTIME);
 		
 		coord2pulse(y-5,z,-90,RELOCTIME);
-		coord2pulse(y-5,z,-90,RELOCTIME);
-		coord2pulse(y-100,z,-90,RELOCTIME);
-		coord2pulse(y-100,z-10,-90,RELOCTIME);
+		coord2pulse(y-5,z-28,-90,RELOCTIME);
 		coord2pulse(y-100,z+50,-90,RELOCTIME);
-		
-		/*coord2pulse(STARTINGY,z-50,0,RELOCTIME);
-		setvalue(MAGN, 1);	
-		coord2pulse(STARTINGY,z-50,-90,RELOCTIME);
-		
-		coord2pulse(y-5,z-38,-90,RELOCTIME);
-		coord2pulse(y-5,z-48,-90,RELOCTIME);
-		coord2pulse(y-100,z+50,-90,RELOCTIME);*/
 		//coord2pulse(130,195,-90,2000);
 
 	 	servo_command1(BASE_CH,200,RELOCTIME);
